@@ -3,6 +3,7 @@ package com.wscicloud.service.immobilier.domain.dto;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,33 +28,22 @@ public class BtpFactureDto implements Serializable {
 
     private Long situationId;
 
-    @NotBlank private String numero;
+    @NotBlank private String numeroFacture;
 
-    @NotNull private LocalDate dateFacture;
+    private String typeFacture;
+
+    private LocalDate dateEmission;
 
     private LocalDate dateEcheance;
 
-    private String objet;
-
     private BigDecimal montantHt;
 
-    private BigDecimal tvaTaux;
-
-    private BigDecimal montantTva;
-
-    private BigDecimal retenueGarantieTaux;
-
-    private BigDecimal retenueGarantieMontant;
-
-    private BigDecimal avanceTaux;
-
-    private BigDecimal avanceMontant;
+    /** Taux de TVA en pourcentage (ex : 18.00). */
+    private BigDecimal tauxTva;
 
     private BigDecimal montantTtc;
 
-    private BigDecimal netAPayer;
-
-    private BigDecimal montantPaye;
-
     private String statut;
+
+    private OffsetDateTime creeLe;
 }

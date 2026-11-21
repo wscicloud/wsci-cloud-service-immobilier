@@ -1,66 +1,49 @@
 package com.wscicloud.service.immobilier.service.calcul;
 
 import java.math.BigDecimal;
+import java.util.Collection;
+
+import com.wscicloud.service.immobilier.domain.entities.BtpSituationTravaux;
 
 import static com.wscicloud.service.immobilier.service.calcul.BtpMontants.montant;
 import static com.wscicloud.service.immobilier.service.calcul.BtpMontants.nz;
-import static com.wscicloud.service.immobilier.service.calcul.BtpMontants.ratio;
-import static com.wscicloud.service.immobilier.service.calcul.BtpMontants.taux;
 
-/** Calculs de situation de travaux : cumul M, cumul M-1, production M, remise. */
+/** Calculs de situation de travaux (logique de l'ancien trigger fn_sync_situation_totaux). */
 public final class BtpSituationCalculator {
 
     private BtpSituationCalculator() {}
 
-    public record Ligne(
-            BigDecimal montantCumul,
-            BigDecimal montantPrecedent,
-            BigDecimal avancementPeriodePct,
-            BigDecimal montantPeriode) {}
+    public record Totaux(BigDecimal montantPeriodeHt, BigDecimal montantCumuleHt, BigDecimal tauxAvancementPct) {}
 
-    public record Totaux(
-            BigDecimal marche,
-            BigDecimal cumul,
-            BigDecimal precedent,
-            BigDecimal periode,
-            BigDecimal remiseCumul,
-            BigDecimal remisePrecedent,
-            BigDecimal remisePeriode,
-            BigDecimal apresRemise,
-            BigDecimal avancementGlobalPct) {}
-
-    /** production M = cumul M - cumul M-1 (montants et pourcentages). */
-    public static Ligne calculerLigne(
-            BigDecimal montantMarche, BigDecimal avancementCumulPct, BigDecimal avancementPrecedentPct) {
-        BigDecimal cumul = montant(nz(montantMarche).multiply(nz(avancementCumulPct)));
-        BigDecimal precedent = montant(nz(montantMarche).multiply(nz(avancementPrecedentPct)));
-        BigDecimal pctPeriode = taux(nz(avancementCumulPct).subtract(nz(avancementPrecedentPct)));
-        return new Ligne(cumul, precedent, pctPeriode, montant(cumul.subtract(precedent)));
+    /** montantPeriodeHt de ligne = quantitePeriode x prixUnitaireHt de la ligne de devis. */
+    public static BigDecimal montantLigne(BigDecimal quantitePeriode, BigDecimal prixUnitaireHt) {
+        return BtpMontants.produit(quantitePeriode, prixUnitaireHt);
     }
 
-    /** La remise est repartie proportionnellement a l'avancement (cumul / marche). */
-    public static Totaux totaliser(BigDecimal marche, BigDecimal cumul, BigDecimal precedent, BigDecimal remiseTotale) {
-        BigDecimal remiseCumul = marche == null || marche.signum() == 0
-                ? BigDecimal.ZERO.setScale(2)
-                : montant(nz(remiseTotale).multiply(nz(cumul)).divide(marche, 6, java.math.RoundingMode.HALF_UP));
-        BigDecimal remisePrecedent = marche == null || marche.signum() == 0
-                ? BigDecimal.ZERO.setScale(2)
-                : montant(nz(remiseTotale).multiply(nz(precedent)).divide(marche, 6, java.math.RoundingMode.HALF_UP));
-        BigDecimal periode = montant(nz(cumul).subtract(nz(precedent)));
-        return new Totaux(
-                montant(marche),
-                montant(cumul),
-                montant(precedent),
-                periode,
-                remiseCumul,
-                remisePrecedent,
-                montant(remiseCumul.subtract(remisePrecedent)),
-                montant(nz(cumul).subtract(remiseCumul)),
-                ratio(cumul, marche));
+    public static BigDecimal quantiteCumulee(BigDecimal quantitePrecedente, BigDecimal quantitePeriode) {
+        return nz(quantitePeriode).add(nz(quantitePrecedente));
     }
 
-    /** Alerte si l'avancement depasse le seuil du projet. */
-    public static boolean alerteAvancement(BigDecimal avancementPct, BigDecimal seuil) {
-        return seuil != null && nz(avancementPct).compareTo(seuil) > 0;
+    /** Somme des montants de periode des AUTRES situations de date <= date de la situation courante. */
+    public static BigDecimal cumulAutresSituations(
+            BtpSituationTravaux courante, Collection<BtpSituationTravaux> situationsProjet) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (BtpSituationTravaux s : situationsProjet) {
+            boolean autre = s.getId() == null || !s.getId().equals(courante.getId());
+            if (autre && !s.getDateSituation().isAfter(courante.getDateSituation())) {
+                total = total.add(nz(s.getMontantPeriodeHt()));
+            }
+        }
+        return montant(total);
+    }
+
+    /**
+     * periode = somme des lignes ; cumule = cumul des autres situations + periode ;
+     * taux d'avancement = cumule / budget x 100 (0 si budget nul).
+     */
+    public static Totaux totaux(Collection<BigDecimal> montantsLignes, BigDecimal cumulAutres, BigDecimal budget) {
+        BigDecimal periode = BtpMontants.somme(montantsLignes);
+        BigDecimal cumule = montant(nz(cumulAutres).add(periode));
+        return new Totaux(periode, cumule, BtpMontants.pourcentage(cumule, budget));
     }
 }

@@ -1,6 +1,7 @@
 package com.wscicloud.service.immobilier.service;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,16 +13,15 @@ import com.wscicloud.service.immobilier.domain.mapper.BtpProjetMapper;
 import com.wscicloud.service.immobilier.domain.repository.BtpProjetRepository;
 
 import jakarta.transaction.Transactional;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Transactional
-@Getter
-@Setter
 @Service
 @Slf4j
 public class BtpProjetServiceImpl implements BtpProjetService {
+
+    static final String STATUT_DEFAUT = "EN_COURS";
+    static final String DEVISE_DEFAUT = "FCFA";
 
     @Autowired
     private BtpProjetRepository projetRepository;
@@ -30,43 +30,75 @@ public class BtpProjetServiceImpl implements BtpProjetService {
     private BtpProjetMapper projetMapper;
 
     @Override
-    public BtpProjetDto create(BtpProjetDto dto) {
-        dto.setId(null);
-        if (dto.getStatutDevis() == null) {
-            dto.setStatutDevis("BROUILLON");
+    public BtpProjetDto creer(BtpProjetDto dto) {
+        if (projetRepository.existsByCodeProjet(dto.getCodeProjet())) {
+            throw new IllegalArgumentException("Le code projet existe deja : " + dto.getCodeProjet());
         }
-        if (dto.getRemiseMontant() == null) {
-            dto.setRemiseMontant(BigDecimal.ZERO);
+        BtpProjet projet = projetMapper.dtoToModele(dto);
+        projet.setId(null);
+        projet.setCreeLe(OffsetDateTime.now());
+        if (projet.getStatut() == null) {
+            projet.setStatut(STATUT_DEFAUT);
         }
-        return projetMapper.modeleToDto(projetRepository.save(projetMapper.dtoToModele(dto)));
-    }
-
-    @Override
-    public BtpProjetDto update(BtpProjetDto dto) {
-        if (dto.getId() == null || !projetRepository.existsById(dto.getId())) {
-            throw new IllegalArgumentException("Projet BTP introuvable : " + dto.getId());
+        if (projet.getDevise() == null) {
+            projet.setDevise(DEVISE_DEFAUT);
         }
-        BtpProjet saved = projetRepository.save(projetMapper.dtoToModele(dto));
-        return projetMapper.modeleToDto(saved);
+        projet.setBudgetPrevuHt(nz(projet.getBudgetPrevuHt()));
+        projet.setBudgetPrevuTtc(nz(projet.getBudgetPrevuTtc()));
+        projet.setBudgetReelHt(nz(projet.getBudgetReelHt()));
+        projet.setBudgetReelTtc(nz(projet.getBudgetReelTtc()));
+        projet.setMargePrevuTtc(nz(projet.getMargePrevuTtc()));
+        projet.setMargeReelTtc(nz(projet.getMargeReelTtc()));
+        return projetMapper.modeleToDto(projetRepository.save(projet));
     }
 
     @Override
-    public BtpProjetDto findById(Long id) {
-        return projetRepository.findById(id).map(projetMapper::modeleToDto).orElse(null);
+    public BtpProjetDto modifier(BtpProjetDto dto) {
+        if (dto.getId() == null) {
+            throw new IllegalArgumentException("L'identifiant du projet est obligatoire");
+        }
+        BtpProjet existant = trouver(dto.getId());
+        BtpProjet projet = projetMapper.dtoToModele(dto);
+        projet.setCreeLe(existant.getCreeLe());
+        if (projet.getStatut() == null) {
+            projet.setStatut(existant.getStatut());
+        }
+        if (projet.getDevise() == null) {
+            projet.setDevise(existant.getDevise());
+        }
+        return projetMapper.modeleToDto(projetRepository.save(projet));
     }
 
     @Override
-    public List<BtpProjetDto> findAllBySocieteId(Long societeId) {
-        return projetMapper.modeleToDto(projetRepository.findBySocieteIdOrderByNom(societeId));
+    public BtpProjetDto lire(Long id) {
+        return projetMapper.modeleToDto(trouver(id));
     }
 
     @Override
-    public List<BtpProjetDto> findAll() {
-        return projetMapper.modeleToDto(projetRepository.findAll());
+    public List<BtpProjetDto> lister() {
+        return projetMapper.modeleToDto(projetRepository.findAllByOrderByCreeLeDesc());
     }
 
     @Override
-    public void delete(Long id) {
-        projetRepository.deleteById(id);
+    public List<BtpProjetDto> rechercher(String q) {
+        if (q == null || q.isBlank()) {
+            return lister();
+        }
+        return projetMapper.modeleToDto(projetRepository.rechercher(q.trim()));
+    }
+
+    @Override
+    public void supprimer(Long id) {
+        projetRepository.delete(trouver(id));
+    }
+
+    private BtpProjet trouver(Long id) {
+        return projetRepository
+                .findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Projet introuvable : " + id));
+    }
+
+    private static BigDecimal nz(BigDecimal v) {
+        return v == null ? BigDecimal.ZERO : v;
     }
 }

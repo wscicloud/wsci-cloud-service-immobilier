@@ -10,5 +10,7 @@ import com.wscicloud.service.immobilier.domain.entities.BtpFacture;
 @Repository
 public interface BtpFactureRepository extends JpaRepository<BtpFacture, Long> {
 
-    List<BtpFacture> findByProjetIdOrderByDateFactureDesc(Long projetId);
+    List<BtpFacture> findByProjetIdOrderByDateEmissionDescIdDesc(Long projetId);
+
+    boolean existsByNumeroFacture(String numeroFacture);
 }

@@ -3,7 +3,9 @@ package com.wscicloud.service.immobilier.domain.dto;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -24,31 +26,23 @@ public class BtpSituationTravauxDto implements Serializable {
 
     @NotNull private Long projetId;
 
-    @NotNull private Integer numero;
+    @NotBlank private String numeroSituation;
 
-    @NotNull private Integer mois;
+    private LocalDate dateSituation;
 
-    @NotNull private Integer annee;
+    private LocalDate periodeDebut;
 
-    @NotNull private LocalDate dateSituation;
+    private LocalDate periodeFin;
 
-    private BigDecimal montantMarcheHt;
-
-    private BigDecimal montantCumuleHt;
-
-    private BigDecimal montantPrecedentHt;
+    private BigDecimal tauxAvancementPct;
 
     private BigDecimal montantPeriodeHt;
 
-    private BigDecimal remiseCumul;
-
-    private BigDecimal remisePrecedent;
-
-    private BigDecimal remisePeriode;
-
-    private BigDecimal montantApresRemise;
-
-    private BigDecimal avancementGlobalPct;
+    private BigDecimal montantCumuleHt;
 
     private String statut;
+
+    private String observations;
+
+    private OffsetDateTime creeLe;
 }

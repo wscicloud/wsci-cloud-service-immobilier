@@ -3,7 +3,15 @@ package com.wscicloud.service.immobilier.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.wscicloud.service.immobilier.domain.dto.BtpProjetDto;
 import com.wscicloud.service.immobilier.service.BtpProjetService;
@@ -21,34 +29,34 @@ public class BtpProjetController {
     @Autowired
     private BtpProjetService projetService;
 
-    @PostMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity create(@Valid @RequestBody BtpProjetDto dto) {
-        return ResponseEntity.ok().body(projetService.create(dto));
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<BtpProjetDto> creer(@Valid @RequestBody BtpProjetDto dto) {
+        return ResponseEntity.ok(projetService.creer(dto));
     }
 
-    @PutMapping(produces = MediaType.APPLICATION_JSON_UTF8_VALUE, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity update(@Valid @RequestBody BtpProjetDto dto) {
-        return ResponseEntity.ok().body(projetService.update(dto));
+    @PutMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<BtpProjetDto> modifier(@Valid @RequestBody BtpProjetDto dto) {
+        return ResponseEntity.ok(projetService.modifier(dto));
     }
 
-    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity findById(@PathVariable("id") Long id) {
-        return ResponseEntity.ok().body(projetService.findById(id));
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<BtpProjetDto> lire(@PathVariable Long id) {
+        return ResponseEntity.ok(projetService.lire(id));
     }
 
-    @GetMapping(value = "/all/{societeId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity findAllBySocieteId(@PathVariable("societeId") Long societeId) {
-        return ResponseEntity.ok().body(projetService.findAllBySocieteId(societeId));
+    @GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> lister() {
+        return ResponseEntity.ok(projetService.lister());
     }
 
-    @GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity findAll() {
-        return ResponseEntity.ok().body(projetService.findAll());
+    @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> rechercher(@RequestParam(required = false) String q) {
+        return ResponseEntity.ok(projetService.rechercher(q));
     }
 
-    @DeleteMapping(value = "/{id}")
-    public ResponseEntity delete(@PathVariable("id") Long id) {
-        projetService.delete(id);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> supprimer(@PathVariable Long id) {
+        projetService.supprimer(id);
+        return ResponseEntity.noContent().build();
     }
 }

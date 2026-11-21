@@ -4,11 +4,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collection;
 
-/** Utilitaires d'arrondi BigDecimal (HALF_UP) communs aux calculs BTP. */
+/** Utilitaires d'arrondi BigDecimal (HALF_UP, 2 decimales) communs aux calculs BTP. */
 public final class BtpMontants {
 
-    public static final int SCALE_MONTANT = 2;
-    public static final int SCALE_TAUX = 4;
+    public static final int SCALE = 2;
 
     private BtpMontants() {}
 
@@ -17,11 +16,7 @@ public final class BtpMontants {
     }
 
     public static BigDecimal montant(BigDecimal value) {
-        return nz(value).setScale(SCALE_MONTANT, RoundingMode.HALF_UP);
-    }
-
-    public static BigDecimal taux(BigDecimal value) {
-        return nz(value).setScale(SCALE_TAUX, RoundingMode.HALF_UP);
+        return nz(value).setScale(SCALE, RoundingMode.HALF_UP);
     }
 
     public static BigDecimal somme(Collection<BigDecimal> values) {
@@ -32,11 +27,27 @@ public final class BtpMontants {
         return montant(total);
     }
 
-    /** Division protegee : retourne 0 si le diviseur est nul. */
-    public static BigDecimal ratio(BigDecimal numerateur, BigDecimal denominateur) {
+    /** Quantite x prix unitaire, arrondi a 2 decimales. */
+    public static BigDecimal produit(BigDecimal quantite, BigDecimal prixUnitaire) {
+        return montant(nz(quantite).multiply(nz(prixUnitaire)));
+    }
+
+    /** HT x (1 + tauxTva / 100), le taux etant exprime en pourcentage (ex : 18.00). */
+    public static BigDecimal ttc(BigDecimal montantHt, BigDecimal tauxTvaPct) {
+        BigDecimal coefficient = BigDecimal.ONE.add(nz(tauxTvaPct).movePointLeft(2));
+        return montant(nz(montantHt).multiply(coefficient));
+    }
+
+    /** numerateur / denominateur x 100 arrondi a 2 decimales ; 0 si le denominateur est nul. */
+    public static BigDecimal pourcentage(BigDecimal numerateur, BigDecimal denominateur) {
         if (denominateur == null || denominateur.signum() == 0) {
-            return BigDecimal.ZERO.setScale(SCALE_TAUX);
+            return montant(BigDecimal.ZERO);
         }
-        return nz(numerateur).divide(denominateur, SCALE_TAUX, RoundingMode.HALF_UP);
+        return nz(numerateur).multiply(BigDecimal.valueOf(100)).divide(denominateur, SCALE, RoundingMode.HALF_UP);
+    }
+
+    /** max(valeur, 0). */
+    public static BigDecimal positif(BigDecimal value) {
+        return montant(nz(value).max(BigDecimal.ZERO));
     }
 }

@@ -10,5 +10,7 @@ import com.wscicloud.service.immobilier.domain.entities.BtpSituationTravaux;
 @Repository
 public interface BtpSituationTravauxRepository extends JpaRepository<BtpSituationTravaux, Long> {
 
-    List<BtpSituationTravaux> findByProjetIdOrderByNumeroDesc(Long projetId);
+    List<BtpSituationTravaux> findByProjetIdOrderByDateSituationAscIdAsc(Long projetId);
+
+    boolean existsByProjetIdAndNumeroSituation(Long projetId, String numeroSituation);
 }

@@ -3,6 +3,7 @@ package com.wscicloud.service.immobilier.domain.dto;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -22,73 +23,35 @@ public class BtpProjetDto implements Serializable {
 
     private Long id;
 
-    private Long societeId;
+    @NotBlank private String codeProjet;
 
-    @NotBlank private String nom;
+    @NotBlank private String nomProjet;
 
-    private String numeroOperation;
+    @NotBlank private String clientNom;
 
-    private String typeOuvrage;
-
-    private String adresseChantier;
-
-    private String villePays;
-
-    private LocalDate dateEtablissement;
-
-    private String client;
-
-    private String moAdresse;
-
-    private String moTelEmail;
-
-    private String maitreOeuvre;
-
-    private String bet;
-
-    private String bureauControle;
-
-    private String entrepriseMandataire;
+    private String localisation;
 
     private LocalDate dateDebut;
 
-    private Integer dureeMois;
+    private LocalDate dateFinPrevue;
 
-    private BigDecimal margeNetteObjectif;
+    private LocalDate dateFinReelle;
 
-    private Integer delaiRealisationCibleMois;
+    private BigDecimal budgetPrevuHt;
 
-    private BigDecimal tauxAvancementSeuilAlerte;
+    private BigDecimal budgetPrevuTtc;
 
-    private BigDecimal margeBruteMinAcceptable;
+    private BigDecimal budgetReelHt;
 
-    private BigDecimal avanceTaux;
+    private BigDecimal budgetReelTtc;
 
-    private Integer delaiPaiementJours;
+    private BigDecimal margePrevuTtc;
 
-    private BigDecimal savTaux;
+    private BigDecimal margeReelTtc;
 
-    private BigDecimal tauxAleas;
+    private String devise;
 
-    private BigDecimal tvaTaux;
+    private String statut;
 
-    private BigDecimal retenueGarantieTaux;
-
-    private BigDecimal fraisGenerauxTaux;
-
-    private BigDecimal margeTaux;
-
-    private String devisNum;
-
-    private LocalDate devisDate;
-
-    private String devisTitre;
-
-    private Boolean devisAfficherTva;
-
-    private Boolean devisExonerationTva;
-
-    private BigDecimal remiseMontant;
-
-    private String statutDevis;
+    private OffsetDateTime creeLe;
 }

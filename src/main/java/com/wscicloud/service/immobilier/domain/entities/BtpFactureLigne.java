@@ -2,6 +2,7 @@ package com.wscicloud.service.immobilier.domain.entities;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
@@ -20,12 +21,7 @@ public class BtpFactureLigne implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @SequenceGenerator(
-            name = "gen_btp_facture_ligne",
-            sequenceName = "seq_btp_facture_ligne",
-            initialValue = 1,
-            allocationSize = 1)
-    @GeneratedValue(generator = "gen_btp_facture_ligne")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "facture_id", nullable = false)
@@ -34,21 +30,24 @@ public class BtpFactureLigne implements Serializable {
     @Column(name = "ligne_devis_id")
     private Long ligneDevisId;
 
+    @Column(name = "situation_ligne_id")
+    private Long situationLigneId;
+
     @Column(name = "designation", nullable = false)
     private String designation;
 
     @Column(name = "unite")
     private String unite;
 
-    @Column(name = "quantite")
+    @Column(name = "quantite", nullable = false)
     private BigDecimal quantite;
 
-    @Column(name = "prix_unitaire")
-    private BigDecimal prixUnitaire;
+    @Column(name = "prix_unitaire_ht", nullable = false)
+    private BigDecimal prixUnitaireHt;
 
-    @Column(name = "montant_ht")
+    @Column(name = "montant_ht", nullable = false)
     private BigDecimal montantHt;
 
-    @Column(name = "ordre")
-    private Integer ordre;
+    @Column(name = "cree_le", nullable = false)
+    private OffsetDateTime creeLe;
 }

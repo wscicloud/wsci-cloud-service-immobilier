@@ -6,15 +6,15 @@ import com.wscicloud.service.immobilier.domain.dto.BtpProjetDto;
 
 public interface BtpProjetService {
 
-    BtpProjetDto create(BtpProjetDto dto);
+    BtpProjetDto creer(BtpProjetDto dto);
 
-    BtpProjetDto update(BtpProjetDto dto);
+    BtpProjetDto modifier(BtpProjetDto dto);
 
-    BtpProjetDto findById(Long id);
+    BtpProjetDto lire(Long id);
 
-    List<BtpProjetDto> findAllBySocieteId(Long societeId);
+    List<BtpProjetDto> lister();
 
-    List<BtpProjetDto> findAll();
+    List<BtpProjetDto> rechercher(String q);
 
-    void delete(Long id);
+    void supprimer(Long id);
 }

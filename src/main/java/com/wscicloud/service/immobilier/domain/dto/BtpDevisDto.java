@@ -2,52 +2,47 @@ package com.wscicloud.service.immobilier.domain.dto;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Devis complet d'un projet : arbre Lot -> Poste -> Lignes avec totaux. */
+/** Devis d'un projet ; {@code lignes} n'est renseigne que pour la lecture unitaire et la creation. */
 @Getter
 @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(of = {"id"})
 public class BtpDevisDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private BtpProjetDto projet;
-    private List<Lot> lots = new ArrayList<>();
-    private BigDecimal totalHt = BigDecimal.ZERO;
-    private BigDecimal remise = BigDecimal.ZERO;
-    private BigDecimal totalApresRemise = BigDecimal.ZERO;
-    private BigDecimal tauxTva = BigDecimal.ZERO;
-    private BigDecimal montantTva = BigDecimal.ZERO;
-    private BigDecimal totalTtc = BigDecimal.ZERO;
+    private Long id;
 
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    public static class Lot implements Serializable {
-        private static final long serialVersionUID = 1L;
-        private Long id;
-        private String codeLot;
-        private String nomLot;
-        private Integer ordre;
-        private BigDecimal totalHt = BigDecimal.ZERO;
-        private List<Poste> postes = new ArrayList<>();
-    }
+    @NotNull private Long projetId;
 
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    public static class Poste implements Serializable {
-        private static final long serialVersionUID = 1L;
-        private Long id;
-        private String nomPoste;
-        private Integer ordre;
-        private BigDecimal totalHt = BigDecimal.ZERO;
-        private List<BtpLigneDevisDto> lignes = new ArrayList<>();
-    }
+    @NotBlank private String numeroDevis;
+
+    private LocalDate dateDevis;
+
+    private BigDecimal montantHt;
+
+    /** Taux de TVA en pourcentage (ex : 18.00). */
+    private BigDecimal tauxTva;
+
+    private BigDecimal montantTtc;
+
+    private String statut;
+
+    private String notes;
+
+    private OffsetDateTime creeLe;
+
+    private List<BtpLigneDevisDto> lignes = new ArrayList<>();
 }

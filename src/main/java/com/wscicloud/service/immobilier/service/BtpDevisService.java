@@ -3,45 +3,27 @@ package com.wscicloud.service.immobilier.service;
 import java.util.List;
 
 import com.wscicloud.service.immobilier.domain.dto.BtpDevisDto;
-import com.wscicloud.service.immobilier.domain.dto.BtpDevisVersionDto;
 import com.wscicloud.service.immobilier.domain.dto.BtpLigneDevisDto;
-import com.wscicloud.service.immobilier.domain.dto.BtpLotDevisDto;
-import com.wscicloud.service.immobilier.domain.dto.BtpPosteDevisDto;
-import com.wscicloud.service.immobilier.domain.dto.BtpProjetDto;
-import com.wscicloud.service.immobilier.domain.dto.BtpSousDetailPrixDto;
 
 public interface BtpDevisService {
 
-    BtpDevisDto findDevis(Long projetId);
+    List<BtpDevisDto> listerParProjet(Long projetId);
 
-    /** Recalcule et persiste le montant de chaque ligne (quantite x PU) puis retourne le devis. */
-    BtpDevisDto recalculer(Long projetId);
+    BtpDevisDto lire(Long devisId);
 
-    BtpLotDevisDto saveLot(BtpLotDevisDto dto);
+    /** Cree un devis, avec ses lignes eventuelles, et calcule ses totaux. */
+    BtpDevisDto creer(BtpDevisDto dto);
 
-    void deleteLot(Long id);
+    /** Modifie l'entete du devis (les lignes sont ignorees) et recalcule le TTC. */
+    BtpDevisDto modifier(BtpDevisDto dto);
 
-    BtpPosteDevisDto savePoste(BtpPosteDevisDto dto);
+    void supprimer(Long devisId);
 
-    void deletePoste(Long id);
+    BtpDevisDto changerStatut(Long devisId, String statut);
 
-    BtpLigneDevisDto saveLigne(BtpLigneDevisDto dto);
+    BtpDevisDto ajouterLigne(Long devisId, BtpLigneDevisDto ligne);
 
-    void deleteLigne(Long id);
+    BtpDevisDto modifierLigne(Long devisId, Long ligneId, BtpLigneDevisDto ligne);
 
-    BtpSousDetailPrixDto saveSousDetail(BtpSousDetailPrixDto dto);
-
-    BtpSousDetailPrixDto findSousDetail(Long ligneId);
-
-    BtpProjetDto dupliquer(Long projetId);
-
-    BtpDevisVersionDto nouvelleVersion(Long projetId, String commentaire);
-
-    List<BtpDevisVersionDto> findVersions(Long projetId);
-
-    BtpProjetDto changerStatut(Long projetId, String statut);
-
-    byte[] exportPdf(Long projetId);
-
-    byte[] exportExcel(Long projetId);
+    BtpDevisDto supprimerLigne(Long devisId, Long ligneId);
 }

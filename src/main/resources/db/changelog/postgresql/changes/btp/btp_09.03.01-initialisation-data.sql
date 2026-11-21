@@ -1,596 +1,358 @@
 --liquibase formatted sql
 
---changeset syao:2026-06-01-btp-init-projets context:btp-init labels:btp-init
-INSERT INTO immobilier.btp_projet (id, societe_id, nom, numero_operation, type_ouvrage, adresse_chantier, ville_pays, date_etablissement,
-    client, date_debut, duree_mois, devis_num, devis_date, remise_montant, statut_devis)
-SELECT nextval('immobilier.seq_btp_projet'), (SELECT MIN(id) FROM public.sys_societe), 'IMMEUBLE R+5 AMOKA', 'IAR5 02-02022025', 'B?timent R+5 - Logements',
-    'BINGERVILLE - ANA GBONTCHUI', 'Abidjan - C?te d''Ivoire', DATE '2026-06-14', 'PRIVE', DATE '2025-09-08', 24,
-    'IAR5 02-02022025', DATE '2026-06-14', 0, 'BROUILLON'
-WHERE NOT EXISTS (SELECT 1 FROM immobilier.btp_projet WHERE nom = 'IMMEUBLE R+5 AMOKA');
+--changeset syao:2026-11-21-btp-10-data-referentiel context:btp-init labels:btp-init
+INSERT INTO immobilier.refm_btp_lot (code, libelle, description) VALUES
+('GO',  'Gros Œuvre',            'Études, installation, infrastructure, élévation et étanchéité'),
+('SO',  'Second Œuvre',          'Plomberie, électricité, revêtements, menuiserie et peinture'),
+('VRD', 'Aménagement Extérieur', 'Dallage parking, clôture et jardinage');
 
-INSERT INTO immobilier.btp_projet (id, societe_id, nom, numero_operation, type_ouvrage, adresse_chantier, ville_pays, date_etablissement,
-    client, date_debut, duree_mois, devis_num, devis_date, remise_montant, statut_devis)
-SELECT nextval('immobilier.seq_btp_projet'), (SELECT MIN(id) FROM public.sys_societe), 'TRIPLEX SIMEON 6 PI?CES', 'YKS05-12102023', 'Villa Triplex 6 pi?ces',
-    'BINGERVILLE', 'Abidjan - C?te d''Ivoire', DATE '2023-10-12', 'Monsieur YAO KONAN SIMEON', DATE '2023-11-01', 12,
-    'YKS05-12102023', DATE '2023-10-12', 3000000, 'VALIDE'
-WHERE NOT EXISTS (SELECT 1 FROM immobilier.btp_projet WHERE nom = 'TRIPLEX SIMEON 6 PI?CES');
+INSERT INTO immobilier.refm_btp_poste (lot_id, code, libelle)
+SELECT id, 'ETUDES_INST', 'Études et Installation de Chantier' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'INFRA_TERR',  'Infrastructure - A) Terrassement' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'INFRA_FOND',  'Infrastructure - B) Fondation' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'RDC_SUPER',   'Élévation RDC - Superstructure' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'RDC_FAUX_PL', 'Élévation RDC - Faux-plafond' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'RDC_ENDUITS', 'Élévation RDC - Enduits' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'E1_SUPER',    'Élévation Étage 1 - Superstructure' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'E1_ETANCH',   'Élévation Étage 1 - Étanchéité' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'E1_FAUX_PL',  'Élévation Étage 1 - Faux-plafond' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'E1_ENDUITS',  'Élévation Étage 1 - Enduits' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'E2_SUPER',    'Élévation Étage 2 - Superstructure' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'E2_ETANCH',   'Élévation Étage 2 - Étanchéité' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'E2_FAUX_PL',  'Élévation Étage 2 - Faux-plafond' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'E2_ENDUITS',  'Élévation Étage 2 - Enduits' FROM immobilier.refm_btp_lot WHERE code = 'GO'
+UNION ALL SELECT id, 'PLOMBERIE',   'Plomberie - Assainissement' FROM immobilier.refm_btp_lot WHERE code = 'SO'
+UNION ALL SELECT id, 'ELECTRICITE', 'Électricité et Climatisation' FROM immobilier.refm_btp_lot WHERE code = 'SO'
+UNION ALL SELECT id, 'REVETEMENTS', 'Revêtements Durs' FROM immobilier.refm_btp_lot WHERE code = 'SO'
+UNION ALL SELECT id, 'MENUISERIE',  'Menuiserie Bois - Menuiserie Aluminium' FROM immobilier.refm_btp_lot WHERE code = 'SO'
+UNION ALL SELECT id, 'PEINTURE',    'Peinture' FROM immobilier.refm_btp_lot WHERE code = 'SO'
+UNION ALL SELECT id, 'PARKING',     'Dallage parking' FROM immobilier.refm_btp_lot WHERE code = 'VRD'
+UNION ALL SELECT id, 'CLOTURE',     'Clôture' FROM immobilier.refm_btp_lot WHERE code = 'VRD'
+UNION ALL SELECT id, 'JARDINAGE',   'Jardinage' FROM immobilier.refm_btp_lot WHERE code = 'VRD';
 
---changeset syao:2026-06-01-btp-init-lots-postes context:btp-init labels:btp-init
-INSERT INTO immobilier.btp_lot_devis (id, projet_id, code_lot, nom_lot, ordre)
-SELECT nextval('immobilier.seq_btp_lot_devis'), p.id, v.code, v.nom, v.ordre
+INSERT INTO immobilier.refm_btp_tache (poste_id, code, libelle, unite_defaut)
+SELECT id, 'TERRASSEMENT',  'Terrassement', 'm3' FROM immobilier.refm_btp_poste WHERE code = 'INFRA_TERR'
+UNION ALL SELECT id, 'FONDATION',     'Fondation', 'ens' FROM immobilier.refm_btp_poste WHERE code = 'INFRA_FOND'
+UNION ALL SELECT id, 'CARRELAGE_SOL', 'Carrelage au sol', 'm2' FROM immobilier.refm_btp_poste WHERE code = 'REVETEMENTS'
+UNION ALL SELECT id, 'CARRELAGE_MUR', 'Carreaux au mur', 'm2' FROM immobilier.refm_btp_poste WHERE code = 'REVETEMENTS'
+UNION ALL SELECT id, 'INST_EAU',      'Installation eau', 'ml' FROM immobilier.refm_btp_poste WHERE code = 'PLOMBERIE'
+UNION ALL SELECT id, 'RES_EVAC',      'Réseaux d''évacuation', 'ml' FROM immobilier.refm_btp_poste WHERE code = 'PLOMBERIE';
+
+INSERT INTO immobilier.refm_btp_sous_tache (tache_id, code, libelle, unite_defaut)
+SELECT id, 'CHAPE_CIMENT', 'Chape ciment', 'm2' FROM immobilier.refm_btp_tache WHERE code = 'CARRELAGE_SOL'
+UNION ALL SELECT id, 'GRES_CERAME',  'Carreaux grès cérame 60x60', 'm2' FROM immobilier.refm_btp_tache WHERE code = 'CARRELAGE_SOL';
+
+--changeset syao:2026-11-21-btp-11-data-projet-devis context:btp-init labels:btp-init
+INSERT INTO immobilier.btp_projet (
+    code_projet, nom_projet, client_nom, localisation,
+    date_debut, date_fin_prevue, budget_prevu_ht, budget_prevu_ttc, devise, statut
+) VALUES (
+    'PRJ-BING-2026-02',
+    'Construction Villa Triplex 6 Pièces (Triplex N°2)',
+    'Monsieur YAO KONAN SIMEON',
+    'Bingerville, Côte d''Ivoire',
+    DATE '2026-10-15',
+    DATE '2027-06-30',
+    60788243.00,
+    60788243.00,
+    'FCFA',
+    'EN_COURS'
+);
+
+INSERT INTO immobilier.btp_devis (
+    projet_id, numero_devis, date_devis,
+    montant_ht, taux_tva, montant_ttc, statut, notes
+)
+SELECT
+    id,
+    'YKSBat0201-07102026',
+    DATE '2026-10-07',
+    60788243.00,
+    0.00,
+    60788243.00,
+    'VALIDE',
+    'Devis quantitatif et estimatif Triplex N°2 (GO: 40 249 364 / SO: 18 262 879 / VRD: 2 276 000).'
+FROM immobilier.btp_projet
+WHERE code_projet = 'PRJ-BING-2026-02';
+
+--changeset syao:2026-11-21-btp-12-data-lignes-devis context:btp-init labels:btp-init
+INSERT INTO immobilier.btp_ligne_devis (
+    devis_id, lot_id, poste_id, tache_id, sous_tache_id,
+    ordre_affichage, designation, unite, quantite, prix_unitaire_ht, montant_ht
+)
+SELECT
+    d.id,
+    l.id,
+    p.id,
+    t.id,
+    st.id,
+    v.ordre_affichage,
+    v.designation,
+    v.unite,
+    v.quantite,
+    v.prix_unitaire_ht,
+    ROUND(v.quantite * v.prix_unitaire_ht, 2)
+FROM immobilier.btp_devis d
+JOIN (VALUES
+    -- 1. ETUDES ET INSTALLATION (GO)
+    (1,   'GO',  'ETUDES_INST', NULL, NULL, 'Frais conception architecturale', 'ens', 0.000, 0.00),
+    (2,   'GO',  'ETUDES_INST', NULL, NULL, 'Frais études d''ingénierie', 'ens', 0.000, 0.00),
+    (3,   'GO',  'ETUDES_INST', NULL, NULL, 'Installation du chantier (1 baraque 2 compartiments)', 'fft', 1.000, 400000.00),
+    (4,   'GO',  'ETUDES_INST', NULL, NULL, 'Repliement du chantier et évacuation des gravats', 'fft', 1.000, 550000.00),
+
+    -- 2. INFRASTRUCTURE - A) TERRASSEMENT (GO)
+    (5,   'GO',  'INFRA_TERR', 'TERRASSEMENT', NULL, 'Implantation de l''ouvrage', 'ens', 1.000, 200000.00),
+    (6,   'GO',  'INFRA_TERR', 'TERRASSEMENT', NULL, 'Fouilles en rigole', 'ml', 45.200, 1500.00),
+    (7,   'GO',  'INFRA_TERR', 'TERRASSEMENT', NULL, 'Fouilles semelles isolées', 'm3', 54.100, 3000.00),
+    (8,   'GO',  'INFRA_TERR', 'TERRASSEMENT', NULL, 'Remblai des fouilles', 'm3', 93.760, 2500.00),
+    (9,   'GO',  'INFRA_TERR', 'TERRASSEMENT', NULL, 'Remblai sous dallage', 'm3', 55.330, 4000.00),
+
+    -- 3. INFRASTRUCTURE - B) FONDATION (GO)
+    (10,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Béton de propreté dosé à 150 kg/m3', 'm3', 5.540, 70000.00),
+    (11,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Semelles filantes dosées à 350 kg/m3 - a) béton', 'm3', 0.000, 90000.00),
+    (12,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Semelles filantes dosées à 350 kg/m3 - b) acier', 'kg', 0.000, 850.00),
+    (13,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Semelles isolées dosées à 350 kg/m3 - a) béton', 'm3', 6.150, 90000.00),
+    (14,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Semelles isolées dosées à 350 kg/m3 - b) acier', 'kg', 553.000, 850.00),
+    (15,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Longrines dosées à 350 kg/m3 - a) béton', 'm3', 1.710, 90000.00),
+    (16,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Longrines dosées à 350 kg/m3 - b) acier', 'kg', 154.000, 850.00),
+    (17,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Longrines dosées à 350 kg/m3 - c) coffrage', 'm2', 22.810, 3600.00),
+    (18,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Amorce de poteaux en BA - a) béton', 'm3', 1.080, 90000.00),
+    (19,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Amorce de poteaux en BA - b) acier', 'kg', 129.150, 850.00),
+    (20,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Amorce de poteaux en BA - c) coffrage', 'm2', 19.800, 3600.00),
+    (21,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Amorce de raidisseurs en BA - a) béton', 'm3', 0.340, 90000.00),
+    (22,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Amorce de raidisseurs en BA - b) acier', 'kg', 24.100, 850.00),
+    (23,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Amorce de raidisseurs en BA - c) coffrage', 'm2', 8.700, 3600.00),
+    (24,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Bêches dosées à 350 kg/m3 - a) béton', 'm3', 0.180, 90000.00),
+    (25,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Bêches dosées à 350 kg/m3 - b) acier', 'kg', 12.780, 850.00),
+    (26,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Agglos pleins de 15 cm de soubassement', 'm2', 36.000, 9500.00),
+    (27,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Voile escalier en BA dosé à 350 kg/m3 - a) béton', 'm3', 0.090, 90000.00),
+    (28,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Voile escalier en BA dosé à 350 kg/m3 - b) acier', 'kg', 8.100, 850.00),
+    (29,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Voile escalier en BA dosé à 350 kg/m3 - c) coffrage', 'm2', 1.620, 3600.00),
+    (30,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Chaînage bas en BA dosé à 350 kg/m3 - a) béton', 'm3', 1.360, 90000.00),
+    (31,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Chaînage bas en BA dosé à 350 kg/m3 - b) acier', 'kg', 1315.000, 850.00),
+    (32,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Chaînage bas en BA dosé à 350 kg/m3 - c) coffrage', 'm2', 18.080, 3600.00),
+    (33,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Dallage en BA avec treillis soudé ép. 10 cm dosé à 250 kg/m3 - a) béton', 'm3', 9.220, 90000.00),
+    (34,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Dallage en BA avec treillis soudé ép. 10 cm dosé à 250 kg/m3 - b) acier', 'kg', 368.840, 850.00),
+    (35,  'GO',  'INFRA_FOND', 'FONDATION', NULL, 'Dallage en BA avec treillis soudé ép. 10 cm dosé à 250 kg/m3 - c) film polyane', 'm2', 92.210, 500.00),
+
+    -- 4. ELEVATION RDC (GO)
+    (36,  'GO',  'RDC_SUPER',  NULL, NULL, 'Maçonnerie en agglos de 15 creux (RDC)', 'm2', 197.000, 8500.00),
+    (37,  'GO',  'RDC_SUPER',  NULL, NULL, 'Maçonnerie en agglos de 10 creux (RDC)', 'm2', 37.340, 7500.00),
+    (38,  'GO',  'RDC_SUPER',  NULL, NULL, 'Poteaux et raidisseurs en BA (RDC) - a) béton', 'm3', 2.300, 90000.00),
+    (39,  'GO',  'RDC_SUPER',  NULL, NULL, 'Poteaux et raidisseurs en BA (RDC) - b) acier', 'kg', 275.520, 850.00),
+    (40,  'GO',  'RDC_SUPER',  NULL, NULL, 'Poteaux et raidisseurs en BA (RDC) - c) coffrage', 'm2', 42.240, 3600.00),
+    (41,  'GO',  'RDC_SUPER',  NULL, NULL, 'Chaînage haut en BA dosé à 350 kg/m3 (RDC) - a) béton', 'm3', 1.890, 90000.00),
+    (42,  'GO',  'RDC_SUPER',  NULL, NULL, 'Chaînage haut en BA dosé à 350 kg/m3 (RDC) - b) acier', 'kg', 170.440, 850.00),
+    (43,  'GO',  'RDC_SUPER',  NULL, NULL, 'Chaînage haut en BA dosé à 350 kg/m3 (RDC) - c) coffrage', 'm2', 7.700, 3600.00),
+    (44,  'GO',  'RDC_SUPER',  NULL, NULL, 'Divers éléments en BA dosé à 350 kg/m3 (RDC) - a) béton', 'm3', 0.890, 90000.00),
+    (45,  'GO',  'RDC_SUPER',  NULL, NULL, 'Divers éléments en BA dosé à 350 kg/m3 (RDC) - b) acier', 'kg', 80.100, 850.00),
+    (46,  'GO',  'RDC_SUPER',  NULL, NULL, 'Divers éléments en BA dosé à 350 kg/m3 (RDC) - c) coffrage', 'm2', 16.020, 3600.00),
+    (47,  'GO',  'RDC_SUPER',  NULL, NULL, 'Poutre en BA dosée à 350 kg/m3 (RDC) - a) béton', 'm3', 6.640, 90000.00),
+    (48,  'GO',  'RDC_SUPER',  NULL, NULL, 'Poutre en BA dosée à 350 kg/m3 (RDC) - b) acier', 'kg', 598.000, 850.00),
+    (49,  'GO',  'RDC_SUPER',  NULL, NULL, 'Poutre en BA dosée à 350 kg/m3 (RDC) - c) coffrage', 'm2', 70.120, 3600.00),
+    (50,  'GO',  'RDC_SUPER',  NULL, NULL, 'Escalier en BA dosé à 350 kg/m3 (RDC) - a) béton', 'm3', 2.420, 90000.00),
+    (51,  'GO',  'RDC_SUPER',  NULL, NULL, 'Escalier en BA dosé à 350 kg/m3 (RDC) - b) acier', 'kg', 218.000, 850.00),
+    (52,  'GO',  'RDC_SUPER',  NULL, NULL, 'Escalier en BA dosé à 350 kg/m3 (RDC) - c) coffrage', 'm2', 47.000, 3600.00),
+    (53,  'GO',  'RDC_SUPER',  NULL, NULL, 'Plancher en corps creux en hourdis 16+4 (RDC)', 'm2', 117.000, 35000.00),
+    (54,  'GO',  'RDC_FAUX_PL',NULL, NULL, 'Staff lisse avec corniche (RDC)', 'm2', 92.210, 8900.00),
+    (55,  'GO',  'RDC_ENDUITS',NULL, NULL, 'Lissage au panticoat des murs intérieurs (RDC)', 'm2', 323.680, 3000.00),
+    (56,  'GO',  'RDC_ENDUITS',NULL, NULL, 'Enduit ciment sur murs extérieurs et intérieurs (RDC)', 'm2', 468.680, 2300.00),
+    (57,  'GO',  'RDC_ENDUITS',NULL, NULL, 'Enduit ciment en sous face plancher (RDC)', 'm2', 123.510, 2300.00),
+    (58,  'GO',  'RDC_ENDUITS',NULL, NULL, 'Enduit ciment sur divers ouvrages (RDC)', 'm2', 36.000, 2300.00),
+
+    -- 5. ELEVATION ETAGE 1 (GO)
+    (59,  'GO',  'E1_SUPER',   NULL, NULL, 'Maçonnerie en agglos de 15 creux (Étage 1)', 'm2', 226.000, 8500.00),
+    (60,  'GO',  'E1_SUPER',   NULL, NULL, 'Maçonnerie en agglos de 10 creux (Étage 1)', 'm2', 45.000, 7500.00),
+    (61,  'GO',  'E1_SUPER',   NULL, NULL, 'Poteaux et raidisseurs en BA (Étage 1) - a) béton', 'm3', 2.300, 90000.00),
+    (62,  'GO',  'E1_SUPER',   NULL, NULL, 'Poteaux et raidisseurs en BA (Étage 1) - b) acier', 'kg', 275.520, 850.00),
+    (63,  'GO',  'E1_SUPER',   NULL, NULL, 'Poteaux et raidisseurs en BA (Étage 1) - c) coffrage', 'm2', 42.240, 3600.00),
+    (64,  'GO',  'E1_SUPER',   NULL, NULL, 'Chaînage haut en BA dosé à 350 kg/m3 (Étage 1) - a) béton', 'm3', 2.940, 90000.00),
+    (65,  'GO',  'E1_SUPER',   NULL, NULL, 'Chaînage haut en BA dosé à 350 kg/m3 (Étage 1) - b) acier', 'kg', 235.200, 850.00),
+    (66,  'GO',  'E1_SUPER',   NULL, NULL, 'Chaînage haut en BA dosé à 350 kg/m3 (Étage 1) - c) coffrage', 'm2', 44.100, 3600.00),
+    (67,  'GO',  'E1_SUPER',   NULL, NULL, 'Poutre en BA dosée à 350 kg/m3 (Étage 1) - a) béton', 'm3', 6.640, 90000.00),
+    (68,  'GO',  'E1_SUPER',   NULL, NULL, 'Poutre en BA dosée à 350 kg/m3 (Étage 1) - b) acier', 'kg', 598.000, 850.00),
+    (69,  'GO',  'E1_SUPER',   NULL, NULL, 'Poutre en BA dosée à 350 kg/m3 (Étage 1) - c) coffrage', 'm2', 70.120, 3600.00),
+    (70,  'GO',  'E1_SUPER',   NULL, NULL, 'Escalier en BA dosé à 350 kg/m3 (Étage 1) - a) béton', 'm3', 2.420, 90000.00),
+    (71,  'GO',  'E1_SUPER',   NULL, NULL, 'Escalier en BA dosé à 350 kg/m3 (Étage 1) - b) acier', 'kg', 218.000, 850.00),
+    (72,  'GO',  'E1_SUPER',   NULL, NULL, 'Escalier en BA dosé à 350 kg/m3 (Étage 1) - c) coffrage', 'm2', 47.000, 3600.00),
+    (73,  'GO',  'E1_SUPER',   NULL, NULL, 'Plancher en corps creux en hourdis 16+4 (Étage 1)', 'm2', 120.000, 35000.00),
+    (74,  'GO',  'E1_ETANCH',  NULL, NULL, 'Étanchéité salles humides & balcons : Afrikote+bitume+chappe 40 (Étage 1)', 'm2', 24.790, 9500.00),
+    (75,  'GO',  'E1_FAUX_PL', NULL, NULL, 'Staff lisse avec corniche (Étage 1)', 'm2', 102.300, 8900.00),
+    (76,  'GO',  'E1_ENDUITS', NULL, NULL, 'Lissage au panticoat des murs intérieurs (Étage 1)', 'm2', 396.000, 3000.00),
+    (77,  'GO',  'E1_ENDUITS', NULL, NULL, 'Enduit ciment sur murs extérieurs et intérieurs (Étage 1)', 'm2', 542.000, 2300.00),
+    (78,  'GO',  'E1_ENDUITS', NULL, NULL, 'Enduit ciment en sous face plancher (Étage 1)', 'm2', 126.510, 2300.00),
+    (79,  'GO',  'E1_ENDUITS', NULL, NULL, 'Enduit ciment sur divers ouvrages (Étage 1)', 'm2', 42.000, 2300.00),
+
+    -- 6. ELEVATION ETAGE 2 (GO)
+    (80,  'GO',  'E2_SUPER',   NULL, NULL, 'Maçonnerie en agglos de 15 creux (Étage 2)', 'm2', 116.000, 8500.00),
+    (81,  'GO',  'E2_SUPER',   NULL, NULL, 'Maçonnerie en agglos de 10 creux (Étage 2)', 'm2', 10.000, 7500.00),
+    (82,  'GO',  'E2_SUPER',   NULL, NULL, 'Poteaux et raidisseurs en BA (Étage 2) - a) béton', 'm3', 2.300, 90000.00),
+    (83,  'GO',  'E2_SUPER',   NULL, NULL, 'Poteaux et raidisseurs en BA (Étage 2) - b) acier', 'kg', 275.520, 850.00),
+    (84,  'GO',  'E2_SUPER',   NULL, NULL, 'Poteaux et raidisseurs en BA (Étage 2) - c) coffrage', 'm2', 42.240, 3600.00),
+    (85,  'GO',  'E2_SUPER',   NULL, NULL, 'Chaînage haut en BA dosé à 350 kg/m3 (Étage 2) - a) béton', 'm3', 0.900, 90000.00),
+    (86,  'GO',  'E2_SUPER',   NULL, NULL, 'Chaînage haut en BA dosé à 350 kg/m3 (Étage 2) - b) acier', 'kg', 72.000, 850.00),
+    (87,  'GO',  'E2_SUPER',   NULL, NULL, 'Chaînage haut en BA dosé à 350 kg/m3 (Étage 2) - c) coffrage', 'm2', 13.500, 3600.00),
+    (88,  'GO',  'E2_SUPER',   NULL, NULL, 'Poutre en BA dosée à 350 kg/m3 (Étage 2) - a) béton', 'm3', 4.330, 90000.00),
+    (89,  'GO',  'E2_SUPER',   NULL, NULL, 'Poutre en BA dosée à 350 kg/m3 (Étage 2) - b) acier', 'kg', 389.000, 850.00),
+    (90,  'GO',  'E2_SUPER',   NULL, NULL, 'Poutre en BA dosée à 350 kg/m3 (Étage 2) - c) coffrage', 'm2', 49.820, 3600.00),
+    (91,  'GO',  'E2_SUPER',   NULL, NULL, 'Plancher en corps creux hourdis 10+5 pour toiture dalle', 'm2', 70.000, 30000.00),
+    (92,  'GO',  'E2_ETANCH',  NULL, NULL, 'Étanchéité sur tout l''étage : Afrikote+bitume+chappe 40', 'm2', 82.440, 9500.00),
+    (93,  'GO',  'E2_ETANCH',  NULL, NULL, 'Étanchéité sur tout l''étage : Afrikote+bitume+paradième', 'm2', 18.770, 12500.00),
+    (94,  'GO',  'E2_FAUX_PL', NULL, NULL, 'Staff lisse avec corniche (Étage 2)', 'm2', 70.000, 8900.00),
+    (95,  'GO',  'E2_ENDUITS', NULL, NULL, 'Lissage au panticoat des murs intérieurs (Étage 2)', 'm2', 63.000, 3000.00),
+    (96,  'GO',  'E2_ENDUITS', NULL, NULL, 'Enduit ciment sur murs extérieurs et intérieurs (Étage 2)', 'm2', 252.000, 2300.00),
+    (97,  'GO',  'E2_ENDUITS', NULL, NULL, 'Enduit ciment en sous face plancher (Étage 2)', 'm2', 70.000, 2300.00),
+    (98,  'GO',  'E2_ENDUITS', NULL, NULL, 'Enduit ciment sur divers ouvrages (Étage 2)', 'm2', 18.000, 2300.00),
+
+    -- 7. PLOMBERIE - ASSAINISSEMENT (SO)
+    (99,  'SO',  'PLOMBERIE',  'INST_EAU', NULL, 'Canalisation en PPR diam. 14', 'ml', 30.000, 3000.00),
+    (100, 'SO',  'PLOMBERIE',  'INST_EAU', NULL, 'Canalisation en PPR diam. 16', 'ml', 80.000, 3800.00),
+    (101, 'SO',  'PLOMBERIE',  'INST_EAU', NULL, 'Canalisation en PPR diam. 25', 'ml', 30.000, 7300.00),
+    (102, 'SO',  'PLOMBERIE',  'INST_EAU', NULL, 'Vanne d''arrêt 15/21', 'u', 8.000, 8300.00),
+    (103, 'SO',  'PLOMBERIE',  'RES_EVAC', NULL, 'Canalisation PVC EU-EV diam. 40', 'ml', 30.000, 1500.00),
+    (104, 'SO',  'PLOMBERIE',  'RES_EVAC', NULL, 'Canalisation PVC EU-EV diam. 75', 'ml', 45.000, 2500.00),
+    (105, 'SO',  'PLOMBERIE',  'RES_EVAC', NULL, 'Canalisation PVC EU-EV diam. 110', 'ml', 90.000, 3500.00),
+    (106, 'SO',  'PLOMBERIE',  'RES_EVAC', NULL, 'Canalisation PVC EU-EV diam. 125', 'ml', 90.000, 5500.00),
+    (107, 'SO',  'PLOMBERIE',  'RES_EVAC', NULL, 'Canalisation PVC EU-EV diam. 160', 'ml', 45.000, 7500.00),
+    (108, 'SO',  'PLOMBERIE',  NULL, NULL, 'Évier de cuisine (PU 0 / PM non pris en compte)', 'u', 1.000, 0.00),
+    (109, 'SO',  'PLOMBERIE',  NULL, NULL, 'Lavabo + Robinetterie (PU 0 / PM non pris en compte)', 'u', 6.000, 0.00),
+    (110, 'SO',  'PLOMBERIE',  NULL, NULL, 'WC (PU 0 / PM non pris en compte)', 'u', 6.000, 0.00),
+    (111, 'SO',  'PLOMBERIE',  NULL, NULL, 'Colonne de douche (PU 0 / PM non pris en compte)', 'u', 4.000, 0.00),
+    (112, 'SO',  'PLOMBERIE',  NULL, NULL, 'Siphon de sol métallique gros-modèle', 'u', 4.000, 25000.00),
+    (113, 'SO',  'PLOMBERIE',  NULL, NULL, 'Siphon de sol métallique petit modèle', 'u', 6.000, 7500.00),
+    (114, 'SO',  'PLOMBERIE',  NULL, NULL, 'Porte savon en plastique (PU 0 / PM non pris en compte)', 'u', 4.000, 0.00),
+    (115, 'SO',  'PLOMBERIE',  NULL, NULL, 'Dévidoir de papier en plastique (PU 0 / PM non pris en compte)', 'u', 4.000, 0.00),
+    (116, 'SO',  'PLOMBERIE',  NULL, NULL, 'Porte serviette à 2 branches (PU 0 / PM non pris en compte)', 'u', 4.000, 0.00),
+    (117, 'SO',  'PLOMBERIE',  NULL, NULL, 'Tablette de lavabo vitrée (PU 0 / PM non pris en compte)', 'u', 6.000, 0.00),
+    (118, 'SO',  'PLOMBERIE',  NULL, NULL, 'Glace de lavabo (PU 0 / PM non pris en compte)', 'u', 4.000, 0.00),
+    (119, 'SO',  'PLOMBERIE',  NULL, NULL, 'Fosse septique + puits perdu (20 Usagers)', 'u', 1.000, 1000000.00),
+    (120, 'SO',  'PLOMBERIE',  NULL, NULL, 'Regard EU/EV 60 x 60 cm²', 'u', 7.000, 75000.00),
+
+    -- 8. ELECTRICITE ET CLIMATISATION (SO)
+    (121, 'SO',  'ELECTRICITE', NULL, NULL, 'Barrette de coupure (grand modèle)', 'ml', 20.000, 8000.00),
+    (122, 'SO',  'ELECTRICITE', NULL, NULL, 'Piquet de terre 2 m', 'ml', 1.000, 15000.00),
+    (123, 'SO',  'ELECTRICITE', NULL, NULL, 'Boîtier de distribution principal y compris accessoires', 'u', 3.000, 125000.00),
+    (124, 'SO',  'ELECTRICITE', NULL, NULL, 'Tube orange diamètre 13', 'ml', 450.000, 750.00),
+    (125, 'SO',  'ELECTRICITE', NULL, NULL, 'Tube orange diamètre 11', 'ml', 750.000, 500.00),
+    (126, 'SO',  'ELECTRICITE', NULL, NULL, 'Câble VGV 3x1,5', 'ml', 350.000, 1500.00),
+    (127, 'SO',  'ELECTRICITE', NULL, NULL, 'TH 10 mm²', 'ml', 80.000, 7050.00),
+    (128, 'SO',  'ELECTRICITE', NULL, NULL, 'TH 2,5 mm²', 'ml', 200.000, 1050.00),
+    (129, 'SO',  'ELECTRICITE', NULL, NULL, 'TH 1,5 mm²', 'ml', 150.000, 650.00),
+    (130, 'SO',  'ELECTRICITE', NULL, NULL, 'Interrupteur SA', 'u', 10.000, 1000.00),
+    (131, 'SO',  'ELECTRICITE', NULL, NULL, 'Interrupteur SA étanche', 'u', 8.000, 2000.00),
+    (132, 'SO',  'ELECTRICITE', NULL, NULL, 'Interrupteur VV', 'u', 16.000, 1500.00),
+    (133, 'SO',  'ELECTRICITE', NULL, NULL, 'Prises de courant 2P+T 10/16A', 'u', 22.000, 1500.00),
+    (134, 'SO',  'ELECTRICITE', NULL, NULL, 'Prises de courant 2P+T 10/16A étanche', 'u', 8.000, 2500.00),
+    (135, 'SO',  'ELECTRICITE', NULL, NULL, 'Dismatic 20 A', 'u', 6.000, 25000.00),
+    (136, 'SO',  'ELECTRICITE', NULL, NULL, 'DPN de 16 A', 'u', 8.000, 8000.00),
+    (137, 'SO',  'ELECTRICITE', NULL, NULL, 'DPN de 10 A', 'u', 8.000, 7000.00),
+    (138, 'SO',  'ELECTRICITE', NULL, NULL, 'Boîte de dérivation ref 294', 'u', 3.000, 7500.00),
+    (139, 'SO',  'ELECTRICITE', NULL, NULL, 'Boîte de dérivation étanche 150/110', 'u', 6.000, 7000.00),
+    (140, 'SO',  'ELECTRICITE', NULL, NULL, 'Boîte ronde', 'u', 60.000, 200.00),
+    (141, 'SO',  'ELECTRICITE', NULL, NULL, 'Boîte étanche apparent 100/100', 'u', 6.000, 5000.00),
+    (142, 'SO',  'ELECTRICITE', NULL, NULL, 'Douille', 'u', 30.000, 500.00),
+
+    -- 9. REVETEMENTS DURS (SO)
+    (143, 'SO',  'REVETEMENTS', 'CARRELAGE_SOL', 'CHAPE_CIMENT', 'Chape ciment', 'm2', 264.510, 2400.00),
+    (144, 'SO',  'REVETEMENTS', 'CARRELAGE_SOL', 'GRES_CERAME',  'Carreaux grès cérame 60x60 (50% dédié achat carreau)', 'm2', 264.510, 11000.00),
+    (145, 'SO',  'REVETEMENTS', 'CARRELAGE_MUR', NULL,           'Faïence toute hauteur salles d''eaux (hors cuisine)', 'm2', 33.000, 11000.00),
+
+    -- 10. MENUISERIE BOIS - MENUISERIE ALUMINIUM (SO)
+    (146, 'SO',  'MENUISERIE',  NULL, NULL, 'Porte alu gris coulissante anodisée 2 vantaux vitrage réfléchissant 6mm (L200xH220)', 'u', 3.000, 412500.00),
+    (147, 'SO',  'MENUISERIE',  NULL, NULL, 'Portes bois pleines y/c serrures et vernis 100x220 (PM)', 'u', 3.000, 0.00),
+    (148, 'SO',  'MENUISERIE',  NULL, NULL, 'Portes bois pleines y/c serrures et vernis 90x220 (PM)', 'u', 5.000, 0.00),
+    (149, 'SO',  'MENUISERIE',  NULL, NULL, 'Portes bois pleines y/c serrures et vernis 70x220 (PM)', 'u', 6.000, 0.00),
+    (150, 'SO',  'MENUISERIE',  NULL, NULL, 'Fenêtres alu gris coulissante anodisée vitrage réfléchissant 6mm (L150xH110)', 'u', 2.000, 123750.00),
+    (151, 'SO',  'MENUISERIE',  NULL, NULL, 'Fenêtres alu gris coulissante anodisée vitrage réfléchissant 6mm (L120xH110)', 'u', 5.000, 99000.00),
+    (152, 'SO',  'MENUISERIE',  NULL, NULL, 'Fenêtres alu gris coulissante anodisée vitrage imprimé 6mm (L80xH60)', 'u', 6.000, 60000.00),
+    (153, 'SO',  'MENUISERIE',  NULL, NULL, 'Garde-corps en inox avec vitrage triplex 10mm (L1210xH80 cm²)', 'u', 1.000, 1258400.00),
+
+    -- 11. PEINTURE (SO)
+    (154, 'SO',  'PEINTURE',    NULL, NULL, 'Peinture pantigré sur murs extérieurs', 'm2', 353.650, 6500.00),
+    (155, 'SO',  'PEINTURE',    NULL, NULL, 'Peinture delux sur murs intérieurs', 'm2', 782.680, 1500.00),
+    (156, 'SO',  'PEINTURE',    NULL, NULL, 'Peinture delux sur staff du plancher', 'm2', 320.020, 1500.00),
+
+    -- 12. AMENAGEMENT EXTERIEUR (VRD)
+    (157, 'VRD', 'PARKING',     NULL, NULL, 'Nivellement sous dallage parking', 'm3', 24.000, 4000.00),
+    (158, 'VRD', 'PARKING',     NULL, NULL, 'Dallage parking BA treillis soudé 10cm 250 kg/m3 - a) béton', 'm3', 4.000, 90000.00),
+    (159, 'VRD', 'PARKING',     NULL, NULL, 'Dallage parking BA treillis soudé 10cm 250 kg/m3 - b) acier', 'kg', 160.000, 850.00),
+    (160, 'VRD', 'PARKING',     NULL, NULL, 'Dallage parking BA treillis soudé 10cm 250 kg/m3 - c) film polyane', 'm2', 40.000, 500.00),
+    (161, 'VRD', 'PARKING',     NULL, NULL, 'Chape ciment sur dallage parking', 'm2', 40.000, 2400.00),
+    (162, 'VRD', 'CLOTURE',     NULL, NULL, 'Peinture pantigré sur murs extérieurs (Clôture)', 'm2', 154.000, 6500.00),
+    (163, 'VRD', 'CLOTURE',     NULL, NULL, 'Réalisation niche compteur eau et courant', 'ens', 1.000, 150000.00),
+    (164, 'VRD', 'JARDINAGE',   NULL, NULL, 'Apport terre végétale et engazonnement', 'ens', 1.000, 185000.00),
+    (165, 'VRD', 'JARDINAGE',   NULL, NULL, 'Gravillons lavé sur parking', 'ens', 1.000, 328000.00)
+) AS v(ordre_affichage, code_lot, code_poste, code_tache, code_sous_tache, designation, unite, quantite, prix_unitaire_ht) ON TRUE
+JOIN immobilier.refm_btp_lot l ON l.code = v.code_lot
+LEFT JOIN immobilier.refm_btp_poste p ON p.code = v.code_poste AND p.lot_id = l.id
+LEFT JOIN immobilier.refm_btp_tache t ON t.code = v.code_tache AND t.poste_id = p.id
+LEFT JOIN immobilier.refm_btp_sous_tache st ON st.code = v.code_sous_tache AND st.tache_id = t.id
+WHERE d.numero_devis = 'YKSBat0201-07102026';
+
+--changeset syao:2026-11-21-btp-13-data-situation-facture context:btp-init labels:btp-init
+INSERT INTO immobilier.btp_situation_travaux (
+    projet_id, numero_situation, date_situation, periode_debut, periode_fin, statut
+)
+SELECT
+    id, 'SIT-01', DATE '2026-11-15', DATE '2026-10-15', DATE '2026-11-15', 'VALIDEE'
+FROM immobilier.btp_projet WHERE code_projet = 'PRJ-BING-2026-02';
+
+INSERT INTO immobilier.btp_situation_ligne (
+    situation_id, ligne_devis_id, quantite_precedente, quantite_periode, quantite_cumulee, montant_periode_ht
+)
+SELECT
+    s.id,
+    ld.id,
+    0.000,
+    ld.quantite,
+    ld.quantite,
+    ld.montant_ht
+FROM immobilier.btp_situation_travaux s
+JOIN immobilier.btp_projet p ON p.id = s.projet_id
+JOIN immobilier.btp_devis d ON d.projet_id = p.id
+JOIN immobilier.btp_ligne_devis ld ON ld.devis_id = d.id
+JOIN immobilier.refm_btp_poste po ON po.id = ld.poste_id
+WHERE p.code_projet = 'PRJ-BING-2026-02'
+  AND s.numero_situation = 'SIT-01'
+  AND po.code IN ('ETUDES_INST', 'INFRA_TERR', 'INFRA_FOND');
+
+-- Totaux de la situation (calcules ici car le recalcul automatique est desormais porte par le service)
+UPDATE immobilier.btp_situation_travaux s
+SET montant_periode_ht = t.total,
+    montant_cumule_ht = t.total,
+    taux_avancement_pct = CASE WHEN p.budget_prevu_ht > 0 THEN ROUND(t.total / p.budget_prevu_ht * 100, 2) ELSE 0 END
+FROM (
+    SELECT situation_id, SUM(montant_periode_ht) AS total
+    FROM immobilier.btp_situation_ligne
+    GROUP BY situation_id
+) t, immobilier.btp_projet p
+WHERE t.situation_id = s.id
+  AND p.id = s.projet_id
+  AND s.numero_situation = 'SIT-01'
+  AND p.code_projet = 'PRJ-BING-2026-02';
+
+INSERT INTO immobilier.btp_facture (
+    projet_id, situation_id, numero_facture, type_facture,
+    date_emission, date_echeance, montant_ht, taux_tva, montant_ttc, statut
+)
+SELECT
+    p.id,
+    s.id,
+    'FAC-2026-001',
+    'SITUATION',
+    DATE '2026-11-16',
+    DATE '2026-12-16',
+    s.montant_periode_ht,
+    0.00,
+    s.montant_periode_ht,
+    'PARTIELLEMENT_PAYEE'
 FROM immobilier.btp_projet p
-CROSS JOIN (VALUES ('GO', 'Gros ?uvre', 1), ('SO', 'Second ?uvre', 2), ('VRD', 'VRD', 3)) AS v(code, nom, ordre)
-WHERE p.nom IN ('IMMEUBLE R+5 AMOKA', 'TRIPLEX SIMEON 6 PI?CES')
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_lot_devis l WHERE l.projet_id = p.id AND l.code_lot = v.code);
+JOIN immobilier.btp_situation_travaux s ON s.projet_id = p.id AND s.numero_situation = 'SIT-01'
+WHERE p.code_projet = 'PRJ-BING-2026-02';
 
-INSERT INTO immobilier.btp_poste_devis (id, lot_id, nom_poste, ordre)
-SELECT nextval('immobilier.seq_btp_poste_devis'), l.id, v.nom, v.ordre
-FROM immobilier.btp_lot_devis l JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES ('IMMEUBLE R+5 AMOKA', 'GO', 'A) TERRASSEMENTS', 1), ('IMMEUBLE R+5 AMOKA', 'GO', 'B) FONDATION', 2),
-  ('IMMEUBLE R+5 AMOKA', 'GO', 'SUPERSTRUCTURE', 3), ('IMMEUBLE R+5 AMOKA', 'SO', 'APPAREILS SANITAIRES', 1),
-  ('IMMEUBLE R+5 AMOKA', 'SO', 'DISTRIBUTION SECONDAIRE', 2),
-
-
-  ('TRIPLEX SIMEON 6 PI?CES', 'GO', 'ETUDES ET INSTALLATION', 1),
-  ('TRIPLEX SIMEON 6 PI?CES', 'GO', 'INFRASTRUCTURE', 2),
-  ('TRIPLEX SIMEON 6 PI?CES', 'GO', 'ELEVATION RDC', 3),
-  ('TRIPLEX SIMEON 6 PI?CES', 'GO', 'ELEVATION ETAGE 1', 4),
-  ('TRIPLEX SIMEON 6 PI?CES', 'GO', 'ELEVATION ETAGE 2', 5),
-  ('TRIPLEX SIMEON 6 PI?CES', 'SO', 'PLOMBERIE ET ASSAINISSEMENT', 1),
-  ('TRIPLEX SIMEON 6 PI?CES', 'SO', 'ELECTRICITE - CLIMATISATION', 2),
-  ('TRIPLEX SIMEON 6 PI?CES', 'SO', 'REVETEMENTS DURS', 3),
-  ('TRIPLEX SIMEON 6 PI?CES', 'SO', 'MENUISERIE BOIS - ALUMINIUM', 4),
-  ('TRIPLEX SIMEON 6 PI?CES', 'SO', 'PEINTURE', 5)
-) AS v(projet, lot, nom, ordre) ON v.projet = p.nom AND v.lot = l.code_lot
-WHERE NOT EXISTS (SELECT 1 FROM immobilier.btp_poste_devis x WHERE x.lot_id = l.id AND x.nom_poste = v.nom);
-
---changeset syao:2026-06-01-btp-init-lignes-amoka context:btp-init labels:btp-init
-INSERT INTO immobilier.btp_ligne_devis (id, poste_id, sous_ensemble, designation, unite, quantite, prix_unitaire, montant_ht, niveau, ordre)
-SELECT nextval('immobilier.seq_btp_ligne_devis'), po.id, v.sous_ensemble, v.designation, v.unite, v.quantite, v.pu, ROUND(v.quantite * v.pu, 2), v.niveau, v.ordre
-FROM immobilier.btp_poste_devis po JOIN immobilier.btp_lot_devis l ON l.id = po.lot_id JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES
- ('A) TERRASSEMENTS','TERRASSEMENT','Nivellement ou decapage terre vegetale','m?',800.000,500.00,'RDC',1),
- ('A) TERRASSEMENTS','TERRASSEMENT','Implantation des ouvrages','ens',1.000,450000.00,'RDC',2),
- ('A) TERRASSEMENTS','TERRASSEMENT','Fouilles en rigole sous murs de soubassement','ml',19.700,6500.00,'Fondations / Soubassement',3),
- ('B) FONDATION','FONDATION','b?ton de propret? dos? ? 150 kg /m3 epassieur de 5 cm','m?',15.860,75000.00,'Fondations / Soubassement',1),
- ('B) FONDATION','FONDATION','semelles isol?es dos?es ? 350 kg / m3 - a) b?ton','m?',92.100,90000.00,'Fondations / Soubassement',2),
- ('B) FONDATION','FONDATION','semelles isol?es dos?es ? 350 kg / m3 - b) acier','kg',8289.410,900.00,'Fondations / Soubassement',3),
- ('SUPERSTRUCTURE','SUPERSTRUCTURE','Poteaux en BA dos? ? 350 kg / m3 - a) b?ton','m?',6.740,90000.00,'RDC',1),
- ('SUPERSTRUCTURE','SUPERSTRUCTURE','Plancher en corps creux hourdis 16 + 4','m?',310.000,35000.00,'1er ?tage',2),
- ('APPAREILS SANITAIRES','PLOMBERIE','Lavabo + Robinetterie','u',4.000,105000.00,'Tous niveaux',1),
- ('APPAREILS SANITAIRES','PLOMBERIE','WC','u',4.000,110000.00,'Tous niveaux',2),
- ('DISTRIBUTION SECONDAIRE','?LECTRICIT?','1 Point lumineux sur simple allumage','u',60.000,6500.00,'Tous niveaux',1),
- ('DISTRIBUTION SECONDAIRE','?LECTRICIT?','Prises de courant 2P+T 10/16A','u',60.000,25000.00,'Tous niveaux',2)
-) AS v(poste, sous_ensemble, designation, unite, quantite, pu, niveau, ordre) ON v.poste = po.nom_poste
-WHERE p.nom = 'IMMEUBLE R+5 AMOKA'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_ligne_devis x WHERE x.poste_id = po.id AND x.ordre = v.ordre);
-
---changeset syao:2026-06-01-btp-init-lignes-triplex context:btp-init labels:btp-init
-INSERT INTO immobilier.btp_ligne_devis (id, poste_id, sous_ensemble, designation, unite, quantite, prix_unitaire, montant_ht, niveau, ordre)
-SELECT nextval('immobilier.seq_btp_ligne_devis'), po.id, v.sous_ensemble, v.designation, v.unite, v.quantite, v.pu, v.montant, v.niveau, v.ordre
-FROM immobilier.btp_poste_devis po JOIN immobilier.btp_lot_devis l ON l.id = po.lot_id JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES
-  ('CONCEPTION ET ETUDE D''EXECUTION', 'Frais conception architecturale', 'ens', 1.0000, 250000.00, 250000.00, '?tudes', 1),
-  ('CONCEPTION ET ETUDE D''EXECUTION', 'Frais etudes d''ingenierie', 'ens', 1.0000, 250000.00, 250000.00, '?tudes', 2),
-  ('INSTALLATION DU CHANTIER', 'Installation du chantier(1 baraques 3 compartiments et citerne 2 m3)', 'fft', 1.0000, 650000.00, 650000.00, '?tudes', 3),
-  ('INSTALLATION DU CHANTIER', 'Repliement du chantier et evacuation des gravats', 'fft', 1.0000, 550000.00, 550000.00, '?tudes', 4)
-) AS v(sous_ensemble, designation, unite, quantite, pu, montant, niveau, ordre) ON TRUE
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND po.nom_poste = 'ETUDES ET INSTALLATION'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_ligne_devis x WHERE x.poste_id = po.id);
-
-INSERT INTO immobilier.btp_ligne_devis (id, poste_id, sous_ensemble, designation, unite, quantite, prix_unitaire, montant_ht, niveau, ordre)
-SELECT nextval('immobilier.seq_btp_ligne_devis'), po.id, v.sous_ensemble, v.designation, v.unite, v.quantite, v.pu, v.montant, v.niveau, v.ordre
-FROM immobilier.btp_poste_devis po JOIN immobilier.btp_lot_devis l ON l.id = po.lot_id JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES
-  ('A) TERRASSEMENT', 'Implantation de l''ouvrage', 'ens', 1.0000, 200000.00, 200000.00, 'Fondations', 1),
-  ('A) TERRASSEMENT', 'Fouilles en rigole', 'ml', 44.2000, 1500.00, 66300.00, 'Fondations', 2),
-  ('A) TERRASSEMENT', 'Fouilles semelles isolées', 'm3', 54.1035, 3000.00, 162310.50, 'Fondations', 3),
-  ('A) TERRASSEMENT', 'Remblai des fouilles', 'm3', 91.0790, 2500.00, 227697.50, 'Fondations', 4),
-  ('A) TERRASSEMENT', 'Remblai sous dallage', 'm3', 55.3260, 4000.00, 221304.00, 'Fondations', 5),
-  ('B) FONDATION', 'béton de propreté dosé à 150 kg /m3', 'm3', 2.7445, 70000.00, 192115.00, 'Fondations', 6),
-  ('semelles filantes dosées à 350 kg / m3', 'a) béton', 'm3', 4.4800, 90000.00, 403200.00, 'Fondations', 7),
-  ('semelles filantes dosées à 350 kg / m3', 'b) acier', 'kg', 313.6000, 850.00, 266560.00, 'Fondations', 8),
-  ('semelles isolées dosées à 350 kg / m3', 'a) béton', 'm3', 6.1485, 90000.00, 553365.00, 'Fondations', 9),
-  ('semelles isolées dosées à 350 kg / m3', 'b) acier', 'kg', 553.3650, 850.00, 470360.25, 'Fondations', 10),
-  ('longrines dosées à 350 kg / m3', 'a) béton', 'm3', 1.7109, 90000.00, 153981.00, 'Fondations', 11),
-  ('longrines dosées à 350 kg / m3', 'b) acier', 'kg', 153.9810, 850.00, 130883.85, 'Fondations', 12),
-  ('longrines dosées à 350 kg / m3', 'c) coffrage', 'm²', 22.8120, 3600.00, 82123.20, 'Fondations', 13),
-  ('Amorce de poteaux en BA', 'a) béton', 'm3', 1.0763, 90000.00, 96862.50, 'Fondations', 14),
-  ('Amorce de poteaux en BA', 'b) acier', 'kg', 96.8625, 850.00, 82333.13, 'Fondations', 15),
-  ('Amorce de poteaux en BA', 'c) coffrage', 'm²', 19.8000, 3600.00, 71280.00, 'Fondations', 16),
-  ('Amorce de raidisseurs en BA', 'a) béton', 'm3', 0.3443, 90000.00, 30982.50, 'Fondations', 17),
-  ('Amorce de raidisseurs en BA', 'b) acier', 'kg', 24.0975, 850.00, 20482.88, 'Fondations', 18),
-  ('Amorce de raidisseurs en BA', 'c) coffrage', 'm²', 8.7000, 3600.00, 31320.00, 'Fondations', 19),
-  ('bêches dosées à 350 kg / m3', 'a) béton', 'm3', 0.3731, 90000.00, 33581.25, 'Fondations', 20),
-  ('bêches dosées à 350 kg / m3', 'b) acier', 'kg', 26.1188, 850.00, 22200.94, 'Fondations', 21),
-  ('bêches dosées à 350 kg / m3', 'agglos pleins de 15 cm de soubassement', 'm²', 35.3600, 9500.00, 335920.00, 'Fondations', 22),
-  ('Amorce de poteaux en BA', 'a) béton', 'm3', 1.0763, 90000.00, 96862.50, 'Fondations', 23),
-  ('Amorce de poteaux en BA', 'b) acier', 'kg', 96.8625, 850.00, 82333.13, 'Fondations', 24),
-  ('Amorce de poteaux en BA', 'c) coffrage', 'm²', 19.8000, 3600.00, 71280.00, 'Fondations', 25),
-  ('Voile escalier en BA dosé à 350 kg / m3', 'a) béton', 'm3', 0.0900, 90000.00, 8100.00, 'Fondations', 26),
-  ('Voile escalier en BA dosé à 350 kg / m3', 'b) acier', 'kg', 8.1000, 850.00, 6885.00, 'Fondations', 27),
-  ('Voile escalier en BA dosé à 350 kg / m3', 'c) coffrage', 'm²', 1.6200, 3600.00, 5832.00, 'Fondations', 28),
-  ('chainage bas en BA dosé à 350 kg/m2', 'a) béton', 'm3', 1.3260, 90000.00, 119340.00, 'Fondations', 29),
-  ('chainage bas en BA dosé à 350 kg/m2', 'b) acier', 'kg', 1286.2200, 850.00, 1093287.00, 'Fondations', 30),
-  ('chainage bas en BA dosé à 350 kg/m2', 'c) coffrage', 'm²', 17.6800, 3600.00, 63648.00, 'Fondations', 31),
-  ('Dallage en béton armé avec treillis soudé epaisseur 10 cm dosé à 250 kg/m2', 'a) béton', 'm3', 9.2210, 90000.00, 829890.00, 'Fondations', 32),
-  ('Dallage en béton armé avec treillis soudé epaisseur 10 cm dosé à 250 kg/m2', 'b) acier', 'kg', 368.8400, 850.00, 313514.00, 'Fondations', 33),
-  ('Dallage en béton armé avec treillis soudé epaisseur 10 cm dosé à 250 kg/m2', 'c) film polyane', 'm²', 92.2100, 500.00, 46105.00, 'Fondations', 34)
-) AS v(sous_ensemble, designation, unite, quantite, pu, montant, niveau, ordre) ON TRUE
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND po.nom_poste = 'INFRASTRUCTURE'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_ligne_devis x WHERE x.poste_id = po.id);
-
-INSERT INTO immobilier.btp_ligne_devis (id, poste_id, sous_ensemble, designation, unite, quantite, prix_unitaire, montant_ht, niveau, ordre)
-SELECT nextval('immobilier.seq_btp_ligne_devis'), po.id, v.sous_ensemble, v.designation, v.unite, v.quantite, v.pu, v.montant, v.niveau, v.ordre
-FROM immobilier.btp_poste_devis po JOIN immobilier.btp_lot_devis l ON l.id = po.lot_id JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES
-  (NULL, 'maçonnerie en agglos de 15 creux', 'm²', 177.0000, 8500.00, 1504500.00, 'RDC', 1),
-  (NULL, 'maçonnerie en agglos de 10 creux', 'm²', 35.0000, 7500.00, 262500.00, 'RDC', 2),
-  ('Poteaux et raidisseurs en BA', 'a)béton', 'm3', 2.2960, 90000.00, 206640.00, 'RDC', 3),
-  ('Poteaux et raidisseurs en BA', 'b)acier', 'kg', 206.6400, 850.00, 175644.00, 'RDC', 4),
-  ('Poteaux et raidisseurs en BA', 'c)coffrage', 'm²', 42.2400, 3600.00, 152064.00, 'RDC', 5),
-  ('chainage haut en BA dosé à 350 kg/m2', 'a)béton', 'm3', 1.8938, 90000.00, 170442.00, 'RDC', 6),
-  ('chainage haut en BA dosé à 350 kg/m2', 'b)acier', 'kg', 170.4420, 850.00, 144875.70, 'RDC', 7),
-  ('chainage haut en BA dosé à 350 kg/m2', 'c)coffrage', 'm²', 7.7000, 3600.00, 27720.00, 'RDC', 8),
-  ('divers élements en BA dosé à 350 kg/m2', 'a)béton', 'm3', 0.8900, 90000.00, 80100.00, 'RDC', 9),
-  ('divers élements en BA dosé à 350 kg/m2', 'b)acier', 'kg', 80.1000, 850.00, 68085.00, 'RDC', 10),
-  ('divers élements en BA dosé à 350 kg/m2', 'c)coffrage', 'm²', 16.0200, 3600.00, 57672.00, 'RDC', 11),
-  ('Poutre en Béton Armé BA dosée à 350 kg / m3', 'a)béton', 'm3', 6.6429, 90000.00, 597861.00, 'RDC', 12),
-  ('Poutre en Béton Armé BA dosée à 350 kg / m3', 'b)acier', 'kg', 597.8610, 850.00, 508181.85, 'RDC', 13),
-  ('Poutre en Béton Armé BA dosée à 350 kg / m3', 'c)coffrage', 'm²', 70.1195, 3600.00, 252430.20, 'RDC', 14),
-  ('Escalier en Béton Armé BA dosé à 350 kg / m3', 'a)béton', 'm3', 2.4200, 90000.00, 217800.00, 'RDC', 15),
-  ('Escalier en Béton Armé BA dosé à 350 kg / m3', 'b)acier', 'kg', 217.8000, 850.00, 185130.00, 'RDC', 16),
-  ('Escalier en Béton Armé BA dosé à 350 kg / m3', 'c)coffrage', 'm²', 47.0000, 3600.00, 169200.00, 'RDC', 17),
-  ('Plancher en corps creux en hourdis 16+4', 'Plancher en corps creux en hourdis 16 + 4', 'm²', 117.0000, 34500.00, 4036500.00, 'RDC', 18),
-  ('staff lisse avec corniche', 'Localisation : toutes pieces de l''appartement et escalier', 'm²', 92.2100, 8900.00, 820669.00, 'RDC', 19),
-  ('ENDUITS', 'Lissage au platre des murs interieurs', 'm²', 279.0000, 3000.00, 837000.00, 'RDC', 20),
-  ('ENDUITS', 'enduit ciment sur murs extérieurs et interieurs', 'm²', 424.0000, 2300.00, 975200.00, 'RDC', 21),
-  ('ENDUITS', 'enduit ciment en sous face plancher', 'm²', 123.5100, 2300.00, 284073.00, 'RDC', 22),
-  ('ENDUITS', 'enduit ciment sur divers ouvrages', 'm²', 36.0000, 2300.00, 82800.00, 'RDC', 23)
-) AS v(sous_ensemble, designation, unite, quantite, pu, montant, niveau, ordre) ON TRUE
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND po.nom_poste = 'ELEVATION RDC'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_ligne_devis x WHERE x.poste_id = po.id);
-
-INSERT INTO immobilier.btp_ligne_devis (id, poste_id, sous_ensemble, designation, unite, quantite, prix_unitaire, montant_ht, niveau, ordre)
-SELECT nextval('immobilier.seq_btp_ligne_devis'), po.id, v.sous_ensemble, v.designation, v.unite, v.quantite, v.pu, v.montant, v.niveau, v.ordre
-FROM immobilier.btp_poste_devis po JOIN immobilier.btp_lot_devis l ON l.id = po.lot_id JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES
-  (NULL, 'maçonnerie en agglos de 15 creux', 'm²', 229.0000, 8500.00, 1946500.00, '?tage 1', 1),
-  (NULL, 'maçonnerie en agglos de 10 creux', 'm²', 35.0000, 7500.00, 262500.00, '?tage 1', 2),
-  ('Poteaux et raidisseurs en BA', 'a)béton', 'm3', 2.2960, 90000.00, 206640.00, '?tage 1', 3),
-  ('Poteaux et raidisseurs en BA', 'b)acier', 'kg', 206.6400, 850.00, 175644.00, '?tage 1', 4),
-  ('Poteaux et raidisseurs en BA', 'c)coffrage', 'm²', 42.2400, 3600.00, 152064.00, '?tage 1', 5),
-  ('chainage haut en BA dosé à 350 kg/m2', 'a)béton', 'm3', 2.9400, 90000.00, 264600.00, '?tage 1', 6),
-  ('chainage haut en BA dosé à 350 kg/m2', 'b)acier', 'kg', 235.2000, 850.00, 199920.00, '?tage 1', 7),
-  ('chainage haut en BA dosé à 350 kg/m2', 'c)coffrage', 'm²', 44.1000, 3600.00, 158760.00, '?tage 1', 8),
-  ('Poutre en Béton Armé BA dosée à 350 kg / m3', 'a)béton', 'm3', 6.6429, 90000.00, 597861.00, '?tage 1', 9),
-  ('Poutre en Béton Armé BA dosée à 350 kg / m3', 'b)acier', 'kg', 597.8610, 850.00, 508181.85, '?tage 1', 10),
-  ('Poutre en Béton Armé BA dosée à 350 kg / m3', 'c)coffrage', 'm²', 70.1195, 3600.00, 252430.20, '?tage 1', 11),
-  ('Escalier en Béton Armé BA dosé à 350 kg / m3', 'a)béton', 'm3', 2.4200, 90000.00, 217800.00, '?tage 1', 12),
-  ('Escalier en Béton Armé BA dosé à 350 kg / m3', 'b)acier', 'kg', 217.8000, 850.00, 185130.00, '?tage 1', 13),
-  ('Escalier en Béton Armé BA dosé à 350 kg / m3', 'c)coffrage', 'm²', 47.0000, 3600.00, 169200.00, '?tage 1', 14),
-  ('Plancher en corps creux en hourdis 16+4', 'Plancher en corps creux en hourdis 16 + 4', 'm²', 120.0000, 34500.00, 4140000.00, '?tage 1', 15),
-  ('Etanchéité dans les salles humides et balcons', 'Afrikote+bitume+chappe 40', 'm²', 24.7900, 9500.00, 235505.00, '?tage 1', 16),
-  ('staff lisse avec corniche', 'Localisation : toutes pieces de l''appartement et escalier', 'm²', 102.3000, 8900.00, 910470.00, '?tage 1', 17),
-  ('ENDUITS', 'Lissage au platre des murs interieurs', 'm²', 382.0000, 3000.00, 1146000.00, '?tage 1', 18),
-  ('ENDUITS', 'enduit ciment sur murs extérieurs et interieurs', 'm²', 528.0000, 2300.00, 1214400.00, '?tage 1', 19),
-  ('ENDUITS', 'enduit ciment en sous face plancher', 'm²', 126.5100, 2300.00, 290973.00, '?tage 1', 20),
-  ('ENDUITS', 'enduit ciment sur divers ouvrages', 'm²', 42.0000, 2300.00, 96600.00, '?tage 1', 21)
-) AS v(sous_ensemble, designation, unite, quantite, pu, montant, niveau, ordre) ON TRUE
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND po.nom_poste = 'ELEVATION ETAGE 1'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_ligne_devis x WHERE x.poste_id = po.id);
-
-INSERT INTO immobilier.btp_ligne_devis (id, poste_id, sous_ensemble, designation, unite, quantite, prix_unitaire, montant_ht, niveau, ordre)
-SELECT nextval('immobilier.seq_btp_ligne_devis'), po.id, v.sous_ensemble, v.designation, v.unite, v.quantite, v.pu, v.montant, v.niveau, v.ordre
-FROM immobilier.btp_poste_devis po JOIN immobilier.btp_lot_devis l ON l.id = po.lot_id JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES
-  (NULL, 'maçonnerie en agglos de 15 creux', 'm²', 116.0000, 8500.00, 986000.00, '?tage 2', 1),
-  (NULL, 'maçonnerie en agglos de 10 creux', 'm²', 10.0000, 7500.00, 75000.00, '?tage 2', 2),
-  ('Poteaux et raidisseurs en BA', 'a)béton', 'm3', 2.2960, 90000.00, 206640.00, '?tage 2', 3),
-  ('Poteaux et raidisseurs en BA', 'b)acier', 'kg', 206.6400, 850.00, 175644.00, '?tage 2', 4),
-  ('Poteaux et raidisseurs en BA', 'c)coffrage', 'm²', 42.2400, 3600.00, 152064.00, '?tage 2', 5),
-  ('chainage haut en BA dosé à 350 kg/m2', 'a)béton', 'm3', 0.9000, 90000.00, 81000.00, '?tage 2', 6),
-  ('chainage haut en BA dosé à 350 kg/m2', 'b)acier', 'kg', 72.0000, 850.00, 61200.00, '?tage 2', 7),
-  ('chainage haut en BA dosé à 350 kg/m2', 'c)coffrage', 'm²', 13.5000, 3600.00, 48600.00, '?tage 2', 8),
-  ('Poutre en Béton Armé BA dosée à 350 kg / m3', 'a)béton', 'm3', 4.3263, 90000.00, 389367.00, '?tage 2', 9),
-  ('Poutre en Béton Armé BA dosée à 350 kg / m3', 'b)acier', 'kg', 389.3670, 850.00, 330961.95, '?tage 2', 10),
-  ('Poutre en Béton Armé BA dosée à 350 kg / m3', 'c)coffrage', 'm²', 49.8180, 3600.00, 179344.80, '?tage 2', 11),
-  ('Plancher en corps creux en hourdis 10 + 5', '10+5 pour toiture dalle', 'm²', 70.0000, 30000.00, 2100000.00, '?tage 2', 12),
-  ('Etanchéité sur tout l''etage', 'Afrikote+bitume+chappe 40', 'm²', 82.4400, 9500.00, 783180.00, '?tage 2', 13),
-  ('Etanchéité sur tout l''etage', 'Afrikote+bitume+paradième', 'm²', 18.7700, 12500.00, 234625.00, '?tage 2', 14),
-  ('staff lisse avec corniche', 'Localisation : toutes pieces de l''appartement et escalier', 'm²', 70.0000, 8900.00, 623000.00, '?tage 2', 15),
-  ('ENDUITS', 'Lissage au panticoat des murs interieurs', 'm²', 63.0000, 3000.00, 189000.00, '?tage 2', 16),
-  ('ENDUITS', 'enduit ciment sur murs extérieurs et interieurs', 'm²', 252.0000, 2300.00, 579600.00, '?tage 2', 17),
-  ('ENDUITS', 'enduit ciment en sous face plancher', 'm²', 70.0000, 2300.00, 161000.00, '?tage 2', 18),
-  ('ENDUITS', 'enduit ciment sur divers ouvrages', 'm²', 18.0000, 2300.00, 41400.00, '?tage 2', 19)
-) AS v(sous_ensemble, designation, unite, quantite, pu, montant, niveau, ordre) ON TRUE
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND po.nom_poste = 'ELEVATION ETAGE 2'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_ligne_devis x WHERE x.poste_id = po.id);
-
-INSERT INTO immobilier.btp_ligne_devis (id, poste_id, sous_ensemble, designation, unite, quantite, prix_unitaire, montant_ht, niveau, ordre)
-SELECT nextval('immobilier.seq_btp_ligne_devis'), po.id, v.sous_ensemble, v.designation, v.unite, v.quantite, v.pu, v.montant, v.niveau, v.ordre
-FROM immobilier.btp_poste_devis po JOIN immobilier.btp_lot_devis l ON l.id = po.lot_id JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES
-  ('Canalisation en PPR', 'diam. 14', 'ml', 30.0000, 3000.00, 90000.00, 'Tous niveaux', 1),
-  ('Canalisation en PPR', 'diam. 16', 'ml', 80.0000, 3800.00, 304000.00, 'Tous niveaux', 2),
-  ('Canalisation en PPR', 'diam. 25', 'ml', 30.0000, 7300.00, 219000.00, 'Tous niveaux', 3),
-  ('Canalisation en PPR', 'Vanne d''arret 15/21', 'u', 8.0000, 8300.00, 66400.00, 'Tous niveaux', 4),
-  ('Canalisation PVC, EU-EV', 'PVC diam. 40', 'ml', 30.0000, 1500.00, 45000.00, 'Tous niveaux', 5),
-  ('Canalisation PVC, EU-EV', 'PVC diam. 75', 'ml', 45.0000, 2500.00, 112500.00, 'Tous niveaux', 6),
-  ('Canalisation PVC, EU-EV', 'PVC diam. 110', 'ml', 90.0000, 3500.00, 315000.00, 'Tous niveaux', 7),
-  ('Canalisation PVC, EU-EV', 'PVC diam. 125', 'ml', 90.0000, 5500.00, 495000.00, 'Tous niveaux', 8),
-  ('Canalisation PVC, EU-EV', 'PVC diam. 160', 'ml', 45.0000, 7500.00, 337500.00, 'Tous niveaux', 9),
-  ('APPAREILS SANITAIRES', 'Evier de cuisine', 'u', 1.0000, 110000.00, 110000.00, 'Tous niveaux', 10),
-  ('APPAREILS SANITAIRES', 'Lavabo + Robinetterie', 'u', 6.0000, 75000.00, 450000.00, 'Tous niveaux', 11),
-  ('APPAREILS SANITAIRES', 'WC', 'u', 6.0000, 95000.00, 570000.00, 'Tous niveaux', 12),
-  ('APPAREILS SANITAIRES', 'Colombe de douche', 'u', 4.0000, 65000.00, 260000.00, 'Tous niveaux', 13),
-  ('APPAREILS SANITAIRES', 'Siphon de sol metallique', 'u', 10.0000, 7500.00, 75000.00, 'Tous niveaux', 14),
-  ('ACCESSOIRES', 'Porte savon en plastique', 'u', 4.0000, 5000.00, 20000.00, 'Tous niveaux', 15),
-  ('ACCESSOIRES', 'Dévidoir de papier en plastique', 'u', 4.0000, 6000.00, 24000.00, 'Tous niveaux', 16),
-  ('ACCESSOIRES', 'Porte serviette à 2 branches', 'u', 4.0000, 15000.00, 60000.00, 'Tous niveaux', 17),
-  ('ACCESSOIRES', 'Tablette de lavabo vitrée', 'u', 6.0000, 16000.00, 96000.00, 'Tous niveaux', 18),
-  ('ACCESSOIRES', 'Glace de lavabo', 'u', 4.0000, 35000.00, 140000.00, 'Tous niveaux', 19),
-  ('ASSAINISSEMENT', 'Fosse septique + puits perdu (20 Usagers)', 'u', 1.0000, 1000000.00, 1000000.00, 'Tous niveaux', 20),
-  ('ASSAINISSEMENT', 'Regard EU/EV 60 x 60 cm²', 'u', 7.0000, 75000.00, 525000.00, 'Tous niveaux', 21)
-) AS v(sous_ensemble, designation, unite, quantite, pu, montant, niveau, ordre) ON TRUE
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND po.nom_poste = 'PLOMBERIE ET ASSAINISSEMENT'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_ligne_devis x WHERE x.poste_id = po.id);
-
-INSERT INTO immobilier.btp_ligne_devis (id, poste_id, sous_ensemble, designation, unite, quantite, prix_unitaire, montant_ht, niveau, ordre)
-SELECT nextval('immobilier.seq_btp_ligne_devis'), po.id, v.sous_ensemble, v.designation, v.unite, v.quantite, v.pu, v.montant, v.niveau, v.ordre
-FROM immobilier.btp_poste_devis po JOIN immobilier.btp_lot_devis l ON l.id = po.lot_id JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES
-  ('LIAISON EQUIPOTENTIELLE', 'Barrette de coupure (grand modele)', 'ml', 20.0000, 8000.00, 160000.00, 'Tous niveaux', 1),
-  ('LIAISON EQUIPOTENTIELLE', 'Piquet de terre 2 m', 'ml', 1.0000, 15000.00, 15000.00, 'Tous niveaux', 2),
-  ('TABLEAUX ELECTRIQUES', 'Boitier de distribution principal', 'u', 3.0000, 125000.00, 375000.00, 'Tous niveaux', 3),
-  ('ALIMENTATION ELECTRIQUE INTERIEUR', 'Tube orange diamètre 13', 'ml', 450.0000, 750.00, 337500.00, 'Tous niveaux', 4),
-  ('ALIMENTATION ELECTRIQUE INTERIEUR', 'Tube orange diamètre 11', 'ml', 750.0000, 500.00, 375000.00, 'Tous niveaux', 5),
-  ('ALIMENTATION ELECTRIQUE INTERIEUR', 'Câble VGV 3 x 1,5', 'ml', 350.0000, 1500.00, 525000.00, 'Tous niveaux', 6),
-  ('ALIMENTATION ELECTRIQUE INTERIEUR', 'TH 10 mm²', 'ml', 80.0000, 7050.00, 564000.00, 'Tous niveaux', 7),
-  ('ALIMENTATION ELECTRIQUE INTERIEUR', 'TH 2,5 mm²', 'ml', 200.0000, 1050.00, 210000.00, 'Tous niveaux', 8),
-  ('ALIMENTATION ELECTRIQUE INTERIEUR', 'TH 1,5 mm²', 'ml', 150.0000, 650.00, 97500.00, 'Tous niveaux', 9),
-  ('DISTRIBUTION SECONDAIRE', 'Interrupteur SA', 'u', 10.0000, 1000.00, 10000.00, 'Tous niveaux', 10),
-  ('DISTRIBUTION SECONDAIRE', 'Interrupteur SA étanche', 'u', 8.0000, 2000.00, 16000.00, 'Tous niveaux', 11),
-  ('DISTRIBUTION SECONDAIRE', 'Interrupteur VV', 'u', 16.0000, 1500.00, 24000.00, 'Tous niveaux', 12),
-  ('DISTRIBUTION SECONDAIRE', 'Prises de courant 2P+T 10/16A', 'u', 22.0000, 1500.00, 33000.00, 'Tous niveaux', 13),
-  ('DISTRIBUTION SECONDAIRE', 'Prises de courant 2P+T 10/16A étanche', 'u', 8.0000, 2500.00, 20000.00, 'Tous niveaux', 14),
-  ('DISTRIBUTION SECONDAIRE', 'Dismatic 20 A', 'u', 6.0000, 25000.00, 150000.00, 'Tous niveaux', 15),
-  ('DISTRIBUTION SECONDAIRE', 'DPN de 16 A', 'u', 8.0000, 8000.00, 64000.00, 'Tous niveaux', 16),
-  ('DISTRIBUTION SECONDAIRE', 'DPN de 10 A', 'u', 8.0000, 7000.00, 56000.00, 'Tous niveaux', 17),
-  ('DISTRIBUTION SECONDAIRE', 'Boite de derivation ref 294', 'u', 3.0000, 7500.00, 22500.00, 'Tous niveaux', 18),
-  ('DISTRIBUTION SECONDAIRE', 'Boite de derivation etanche 150/110', 'u', 6.0000, 7000.00, 42000.00, 'Tous niveaux', 19),
-  ('DISTRIBUTION SECONDAIRE', 'Boite ronde', 'u', 60.0000, 200.00, 12000.00, 'Tous niveaux', 20),
-  ('DISTRIBUTION SECONDAIRE', 'Boite étanche apparant 100/100', 'u', 6.0000, 5000.00, 30000.00, 'Tous niveaux', 21),
-  ('APPAREILS D''ECLAIRAGE', 'Douille', 'u', 30.0000, 500.00, 15000.00, 'Tous niveaux', 22)
-) AS v(sous_ensemble, designation, unite, quantite, pu, montant, niveau, ordre) ON TRUE
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND po.nom_poste = 'ELECTRICITE - CLIMATISATION'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_ligne_devis x WHERE x.poste_id = po.id);
-
-INSERT INTO immobilier.btp_ligne_devis (id, poste_id, sous_ensemble, designation, unite, quantite, prix_unitaire, montant_ht, niveau, ordre)
-SELECT nextval('immobilier.seq_btp_ligne_devis'), po.id, v.sous_ensemble, v.designation, v.unite, v.quantite, v.pu, v.montant, v.niveau, v.ordre
-FROM immobilier.btp_poste_devis po JOIN immobilier.btp_lot_devis l ON l.id = po.lot_id JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES
-  ('Carreaux au sol', 'Chape ciment', 'm²', 264.5100, 2400.00, 634824.00, 'Tous niveaux', 1),
-  ('Carreaux au sol', 'Carreaux grès cérame 60x60 dont 50% dédié à l''achat du carreau', 'm²', 264.5100, 11000.00, 2909610.00, 'Tous niveaux', 2),
-  ('Carreaux au mur', 'faience 15x15 sur une hauteur de 1,80 m au dessus de l''evier et toute hauteur pour les salles d''eaux', 'm²', 136.5000, 11000.00, 1501500.00, 'Tous niveaux', 3)
-) AS v(sous_ensemble, designation, unite, quantite, pu, montant, niveau, ordre) ON TRUE
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND po.nom_poste = 'REVETEMENTS DURS'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_ligne_devis x WHERE x.poste_id = po.id);
-
-INSERT INTO immobilier.btp_ligne_devis (id, poste_id, sous_ensemble, designation, unite, quantite, prix_unitaire, montant_ht, niveau, ordre)
-SELECT nextval('immobilier.seq_btp_ligne_devis'), po.id, v.sous_ensemble, v.designation, v.unite, v.quantite, v.pu, v.montant, v.niveau, v.ordre
-FROM immobilier.btp_poste_devis po JOIN immobilier.btp_lot_devis l ON l.id = po.lot_id JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES
-  ('Porte alu gris coulissante anodisée 2 vantaux', 'L200 x H 220', 'u', 3.0000, 412500.00, 1237500.00, 'Tous niveaux', 1),
-  ('Portes bois pleines y/c serrures et vernis', '100 x 220', 'u', 3.0000, 145000.00, 435000.00, 'Tous niveaux', 2),
-  ('Portes bois pleines y/c serrures et vernis', '90 x 220', 'u', 5.0000, 135000.00, 675000.00, 'Tous niveaux', 3),
-  ('Portes bois pleines y/c serrures et vernis', '70 x 220', 'u', 7.0000, 125000.00, 875000.00, 'Tous niveaux', 4),
-  ('Fenêtres alu gris coulissante anodisée 2 vantaux', 'L150 x H 110', 'u', 2.0000, 123750.00, 247500.00, 'Tous niveaux', 5),
-  ('Fenêtres alu gris coulissante anodisée 2 vantaux', 'L 120 x H 110', 'u', 5.0000, 99000.00, 495000.00, 'Tous niveaux', 6),
-  ('Fenêtres alu gris coulissante anodisée 2 vantaux', 'L 80 x H 60', 'u', 6.0000, 60000.00, 360000.00, 'Tous niveaux', 7),
-  ('Garde corp en inox avec vitrage triplex 10 mm', 'L 1210 x H 80 cm²', 'u', 1.0000, 1258400.00, 1258400.00, 'Tous niveaux', 8)
-) AS v(sous_ensemble, designation, unite, quantite, pu, montant, niveau, ordre) ON TRUE
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND po.nom_poste = 'MENUISERIE BOIS - ALUMINIUM'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_ligne_devis x WHERE x.poste_id = po.id);
-
-INSERT INTO immobilier.btp_ligne_devis (id, poste_id, sous_ensemble, designation, unite, quantite, prix_unitaire, montant_ht, niveau, ordre)
-SELECT nextval('immobilier.seq_btp_ligne_devis'), po.id, v.sous_ensemble, v.designation, v.unite, v.quantite, v.pu, v.montant, v.niveau, v.ordre
-FROM immobilier.btp_poste_devis po JOIN immobilier.btp_lot_devis l ON l.id = po.lot_id JOIN immobilier.btp_projet p ON p.id = l.projet_id
-JOIN (VALUES
-  (NULL, 'Peinture pantigré sur murs extérieurs', 'm²', 353.6500, 6500.00, 2298725.00, 'Tous niveaux', 1),
-  (NULL, 'Peinture delux sur murs interieurs', 'm²', 724.0000, 1500.00, 1086000.00, 'Tous niveaux', 2),
-  (NULL, 'Peinture delux sur staff du plancher', 'm²', 320.0200, 1500.00, 480030.00, 'Tous niveaux', 3)
-) AS v(sous_ensemble, designation, unite, quantite, pu, montant, niveau, ordre) ON TRUE
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND po.nom_poste = 'PEINTURE'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_ligne_devis x WHERE x.poste_id = po.id);
-
---changeset syao:2026-06-01-btp-init-biblio context:btp-init labels:btp-init
-INSERT INTO immobilier.refm_btp_tache_biblio (id, code, tache, lot, categorie, unite, rendement, chef, compagnon, manoeuvres, specialiste, couleur_hex)
-SELECT nextval('immobilier.seq_refm_btp_tache_biblio'), v.* FROM (VALUES
-('PRE-001', 'Installation de chantier', 'Pr?paration', 'Pr?paration', 'ft', 1.00, 1, 0, 2, 0, 'FFD966'),
-('TER-001', 'Terrassement g?n?ral (d?capage)', 'Pr?paration', 'Terrassement', 'm?', 4.00, 0, 1, 3, 0, 'FFD966'),
-('BET-001', 'B?ton de propret?', 'Fondations', 'B?ton', 'm?', 3.00, 0, 1, 2, 0, 'A9D08E'),
-('FER-001', 'Ferraillage fondations', 'Fondations', 'Ferraillage', 'kg', 80.00, 0, 2, 1, 0, 'A9D08E'),
-('MAC-001', '?l?vation murs soubassement', 'Gros ?uvre', 'Ma?onnerie', 'm?', 2.50, 0, 2, 2, 0, '9DC3E6'),
-('BET-005', 'Dalle RDC (coffrage + ferraillage + b?ton)', 'Gros ?uvre', 'B?ton', 'm?', 1.20, 1, 3, 3, 0, '9DC3E6'),
-('PEI-001', 'Peinture int?rieure', 'Finitions', 'Peinture', 'm?', 4.00, 0, 1, 1, 0, 'F8CBAD')
-) AS v(code, tache, lot, categorie, unite, rendement, chef, compagnon, manoeuvres, specialiste, couleur_hex)
-ON CONFLICT (code) DO NOTHING;
-
---changeset syao:2026-06-01-btp-init-soustraitants context:btp-init labels:btp-init
-INSERT INTO immobilier.btp_soustraitant (id, projet_id, nom, metier, lot, marche_montant)
-SELECT nextval('immobilier.seq_btp_soustraitant'), p.id, v.nom, v.metier, v.lot, v.montant
-FROM immobilier.btp_projet p CROSS JOIN (VALUES
-('ST_01', 'Ma?on', 'GO', 29732403.00), ('ST_02', 'Menuisier coffreur', 'GO', 15847373.00),
-('ST_03', 'Ferrailleur', 'GO', 12385920.00), ('ST_06', 'Carreleur', 'SO', 9216355.00),
-('ST_07', 'Plombier', 'SO', 15270000.00), ('ST_14', '?lectricien', 'SO', 13203300.00)
-) AS v(nom, metier, lot, montant)
-WHERE p.nom = 'IMMEUBLE R+5 AMOKA'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_soustraitant x WHERE x.projet_id = p.id AND x.nom = v.nom);
-
---changeset syao:2026-06-01-btp-init-situation-triplex context:btp-init labels:btp-init
-INSERT INTO immobilier.btp_situation_travaux (id, projet_id, numero, mois, annee, date_situation, montant_marche_ht, montant_cumule_ht,
-    montant_precedent_ht, montant_periode_ht, remise_cumul, remise_precedent, remise_periode, montant_apres_remise, avancement_global_pct, statut)
-SELECT nextval('immobilier.seq_btp_situation_travaux'), p.id, 1, 7, 2025, DATE '2025-07-28', 63800122.68, 61430122.68, 29292164.93, 32137957.75, 2888558.21, 1377371.88, 1511186.33, 58541564.47, 0.9629, 'VALIDEE'
-FROM immobilier.btp_projet p
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES'
-  AND NOT EXISTS (SELECT 1 FROM immobilier.btp_situation_travaux x WHERE x.projet_id = p.id AND x.numero = 1);
-
---changeset syao:2026-06-01-btp-init-situation-lignes-triplex context:btp-init labels:btp-init
-INSERT INTO immobilier.btp_situation_ligne (id, situation_id, ligne_devis_id, avancement_cumul_pct, montant_cumul_ht, avancement_precedent_pct, montant_precedent_ht, avancement_periode_pct, montant_periode_ht)
-SELECT nextval('immobilier.seq_btp_situation_ligne'), st.id, li.id, v.c_pct, v.c_mt, v.p_pct, v.p_mt, v.n_pct, v.n_mt
-FROM immobilier.btp_situation_travaux st JOIN immobilier.btp_projet p ON p.id = st.projet_id
-JOIN immobilier.btp_lot_devis l ON l.projet_id = p.id JOIN immobilier.btp_poste_devis po ON po.lot_id = l.id AND po.nom_poste = 'ETUDES ET INSTALLATION'
-JOIN immobilier.btp_ligne_devis li ON li.poste_id = po.id
-JOIN (VALUES
-  (1, 1.0000, 250000.00, 1.0000, 250000.00, 0.0000, 0.00),
-  (2, 1.0000, 250000.00, 1.0000, 250000.00, 0.0000, 0.00),
-  (3, 1.0000, 650000.00, 1.0000, 650000.00, 0.0000, 0.00),
-  (4, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00)
-) AS v(ordre, c_pct, c_mt, p_pct, p_mt, n_pct, n_mt) ON v.ordre = li.ordre
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND st.numero = 1
-ON CONFLICT (situation_id, ligne_devis_id) DO NOTHING;
-
-INSERT INTO immobilier.btp_situation_ligne (id, situation_id, ligne_devis_id, avancement_cumul_pct, montant_cumul_ht, avancement_precedent_pct, montant_precedent_ht, avancement_periode_pct, montant_periode_ht)
-SELECT nextval('immobilier.seq_btp_situation_ligne'), st.id, li.id, v.c_pct, v.c_mt, v.p_pct, v.p_mt, v.n_pct, v.n_mt
-FROM immobilier.btp_situation_travaux st JOIN immobilier.btp_projet p ON p.id = st.projet_id
-JOIN immobilier.btp_lot_devis l ON l.projet_id = p.id JOIN immobilier.btp_poste_devis po ON po.lot_id = l.id AND po.nom_poste = 'INFRASTRUCTURE'
-JOIN immobilier.btp_ligne_devis li ON li.poste_id = po.id
-JOIN (VALUES
-  (1, 1.0000, 200000.00, 1.0000, 200000.00, 0.0000, 0.00),
-  (2, 1.0000, 66300.00, 1.0000, 66300.00, 0.0000, 0.00),
-  (3, 1.0000, 162310.50, 1.0000, 162310.50, 0.0000, 0.00),
-  (4, 1.0000, 227697.50, 1.0000, 227697.50, 0.0000, 0.00),
-  (5, 1.0000, 221304.00, 1.0000, 221304.00, 0.0000, 0.00),
-  (6, 1.0000, 192115.00, 1.0000, 192115.00, 0.0000, 0.00),
-  (7, 1.0000, 403200.00, 1.0000, 403200.00, 0.0000, 0.00),
-  (8, 1.0000, 266560.00, 1.0000, 266560.00, 0.0000, 0.00),
-  (9, 1.0000, 553365.00, 1.0000, 553365.00, 0.0000, 0.00),
-  (10, 1.0000, 470360.25, 1.0000, 470360.25, 0.0000, 0.00),
-  (11, 1.0000, 153981.00, 1.0000, 153981.00, 0.0000, 0.00),
-  (12, 1.0000, 130883.85, 1.0000, 130883.85, 0.0000, 0.00),
-  (13, 1.0000, 82123.20, 1.0000, 82123.20, 0.0000, 0.00),
-  (14, 1.0000, 96862.50, 1.0000, 96862.50, 0.0000, 0.00),
-  (15, 1.0000, 82333.13, 1.0000, 82333.13, 0.0000, 0.00),
-  (16, 1.0000, 71280.00, 1.0000, 71280.00, 0.0000, 0.00),
-  (17, 1.0000, 30982.50, 1.0000, 30982.50, 0.0000, 0.00),
-  (18, 1.0000, 20482.88, 1.0000, 20482.88, 0.0000, 0.00),
-  (19, 1.0000, 31320.00, 1.0000, 31320.00, 0.0000, 0.00),
-  (20, 1.0000, 33581.25, 1.0000, 33581.25, 0.0000, 0.00),
-  (21, 1.0000, 22200.94, 1.0000, 22200.94, 0.0000, 0.00),
-  (22, 1.0000, 335920.00, 1.0000, 335920.00, 0.0000, 0.00),
-  (23, 1.0000, 96862.50, 1.0000, 96862.50, 0.0000, 0.00),
-  (24, 1.0000, 82333.13, 1.0000, 82333.13, 0.0000, 0.00),
-  (25, 1.0000, 71280.00, 1.0000, 71280.00, 0.0000, 0.00),
-  (26, 1.0000, 8100.00, 1.0000, 8100.00, 0.0000, 0.00),
-  (27, 1.0000, 6885.00, 1.0000, 6885.00, 0.0000, 0.00),
-  (28, 1.0000, 5832.00, 1.0000, 5832.00, 0.0000, 0.00),
-  (29, 1.0000, 119340.00, 1.0000, 119340.00, 0.0000, 0.00),
-  (30, 1.0000, 1093287.00, 1.0000, 1093287.00, 0.0000, 0.00),
-  (31, 1.0000, 63648.00, 1.0000, 63648.00, 0.0000, 0.00),
-  (32, 1.0000, 829890.00, 1.0000, 829890.00, 0.0000, 0.00),
-  (33, 1.0000, 313514.00, 1.0000, 313514.00, 0.0000, 0.00),
-  (34, 1.0000, 46105.00, 1.0000, 46105.00, 0.0000, 0.00)
-) AS v(ordre, c_pct, c_mt, p_pct, p_mt, n_pct, n_mt) ON v.ordre = li.ordre
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND st.numero = 1
-ON CONFLICT (situation_id, ligne_devis_id) DO NOTHING;
-
-INSERT INTO immobilier.btp_situation_ligne (id, situation_id, ligne_devis_id, avancement_cumul_pct, montant_cumul_ht, avancement_precedent_pct, montant_precedent_ht, avancement_periode_pct, montant_periode_ht)
-SELECT nextval('immobilier.seq_btp_situation_ligne'), st.id, li.id, v.c_pct, v.c_mt, v.p_pct, v.p_mt, v.n_pct, v.n_mt
-FROM immobilier.btp_situation_travaux st JOIN immobilier.btp_projet p ON p.id = st.projet_id
-JOIN immobilier.btp_lot_devis l ON l.projet_id = p.id JOIN immobilier.btp_poste_devis po ON po.lot_id = l.id AND po.nom_poste = 'ELEVATION RDC'
-JOIN immobilier.btp_ligne_devis li ON li.poste_id = po.id
-JOIN (VALUES
-  (1, 1.0000, 1504500.00, 1.0000, 1504500.00, 0.0000, 0.00),
-  (2, 1.0000, 262500.00, 1.0000, 262500.00, 0.0000, 0.00),
-  (3, 1.0000, 206640.00, 1.0000, 206640.00, 0.0000, 0.00),
-  (4, 1.0000, 175644.00, 1.0000, 175644.00, 0.0000, 0.00),
-  (5, 1.0000, 152064.00, 1.0000, 152064.00, 0.0000, 0.00),
-  (6, 1.0000, 170442.00, 1.0000, 170442.00, 0.0000, 0.00),
-  (7, 1.0000, 144875.70, 1.0000, 144875.70, 0.0000, 0.00),
-  (8, 1.0000, 27720.00, 1.0000, 27720.00, 0.0000, 0.00),
-  (9, 1.0000, 80100.00, 1.0000, 80100.00, 0.0000, 0.00),
-  (10, 1.0000, 68085.00, 1.0000, 68085.00, 0.0000, 0.00),
-  (11, 1.0000, 57672.00, 1.0000, 57672.00, 0.0000, 0.00),
-  (12, 1.0000, 597861.00, 1.0000, 597861.00, 0.0000, 0.00),
-  (13, 1.0000, 508181.85, 1.0000, 508181.85, 0.0000, 0.00),
-  (14, 1.0000, 252430.20, 1.0000, 252430.20, 0.0000, 0.00),
-  (15, 1.0000, 217800.00, 1.0000, 217800.00, 0.0000, 0.00),
-  (16, 1.0000, 185130.00, 1.0000, 185130.00, 0.0000, 0.00),
-  (17, 1.0000, 169200.00, 1.0000, 169200.00, 0.0000, 0.00),
-  (18, 1.0000, 4036500.00, 1.0000, 4036500.00, 0.0000, 0.00),
-  (19, 1.0000, 820669.00, 0.0000, 0.00, 1.0000, 820669.00),
-  (20, 1.0000, 837000.00, 0.0000, 0.00, 1.0000, 837000.00),
-  (21, 1.0000, 975200.00, 0.0000, 0.00, 1.0000, 975200.00),
-  (22, 1.0000, 284073.00, 0.0000, 0.00, 1.0000, 284073.00),
-  (23, 1.0000, 82800.00, 0.0000, 0.00, 1.0000, 82800.00)
-) AS v(ordre, c_pct, c_mt, p_pct, p_mt, n_pct, n_mt) ON v.ordre = li.ordre
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND st.numero = 1
-ON CONFLICT (situation_id, ligne_devis_id) DO NOTHING;
-
-INSERT INTO immobilier.btp_situation_ligne (id, situation_id, ligne_devis_id, avancement_cumul_pct, montant_cumul_ht, avancement_precedent_pct, montant_precedent_ht, avancement_periode_pct, montant_periode_ht)
-SELECT nextval('immobilier.seq_btp_situation_ligne'), st.id, li.id, v.c_pct, v.c_mt, v.p_pct, v.p_mt, v.n_pct, v.n_mt
-FROM immobilier.btp_situation_travaux st JOIN immobilier.btp_projet p ON p.id = st.projet_id
-JOIN immobilier.btp_lot_devis l ON l.projet_id = p.id JOIN immobilier.btp_poste_devis po ON po.lot_id = l.id AND po.nom_poste = 'ELEVATION ETAGE 1'
-JOIN immobilier.btp_ligne_devis li ON li.poste_id = po.id
-JOIN (VALUES
-  (1, 1.0000, 1946500.00, 1.0000, 1946500.00, 0.0000, 0.00),
-  (2, 1.0000, 262500.00, 1.0000, 262500.00, 0.0000, 0.00),
-  (3, 1.0000, 206640.00, 1.0000, 206640.00, 0.0000, 0.00),
-  (4, 1.0000, 175644.00, 1.0000, 175644.00, 0.0000, 0.00),
-  (5, 1.0000, 152064.00, 1.0000, 152064.00, 0.0000, 0.00),
-  (6, 1.0000, 264600.00, 1.0000, 264600.00, 0.0000, 0.00),
-  (7, 1.0000, 199920.00, 1.0000, 199920.00, 0.0000, 0.00),
-  (8, 1.0000, 158760.00, 1.0000, 158760.00, 0.0000, 0.00),
-  (9, 1.0000, 597861.00, 1.0000, 597861.00, 0.0000, 0.00),
-  (10, 1.0000, 508181.85, 1.0000, 508181.85, 0.0000, 0.00),
-  (11, 1.0000, 252430.20, 1.0000, 252430.20, 0.0000, 0.00),
-  (12, 1.0000, 217800.00, 1.0000, 217800.00, 0.0000, 0.00),
-  (13, 1.0000, 185130.00, 1.0000, 185130.00, 0.0000, 0.00),
-  (14, 1.0000, 169200.00, 1.0000, 169200.00, 0.0000, 0.00),
-  (15, 1.0000, 4140000.00, 1.0000, 4140000.00, 0.0000, 0.00),
-  (16, 1.0000, 235505.00, 0.0000, 0.00, 1.0000, 235505.00),
-  (17, 1.0000, 910470.00, 0.0000, 0.00, 1.0000, 910470.00),
-  (18, 1.0000, 1146000.00, 0.0000, 0.00, 1.0000, 1146000.00),
-  (19, 1.0000, 1214400.00, 0.0000, 0.00, 1.0000, 1214400.00),
-  (20, 1.0000, 290973.00, 0.0000, 0.00, 1.0000, 290973.00),
-  (21, 1.0000, 96600.00, 0.0000, 0.00, 1.0000, 96600.00)
-) AS v(ordre, c_pct, c_mt, p_pct, p_mt, n_pct, n_mt) ON v.ordre = li.ordre
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND st.numero = 1
-ON CONFLICT (situation_id, ligne_devis_id) DO NOTHING;
-
-INSERT INTO immobilier.btp_situation_ligne (id, situation_id, ligne_devis_id, avancement_cumul_pct, montant_cumul_ht, avancement_precedent_pct, montant_precedent_ht, avancement_periode_pct, montant_periode_ht)
-SELECT nextval('immobilier.seq_btp_situation_ligne'), st.id, li.id, v.c_pct, v.c_mt, v.p_pct, v.p_mt, v.n_pct, v.n_mt
-FROM immobilier.btp_situation_travaux st JOIN immobilier.btp_projet p ON p.id = st.projet_id
-JOIN immobilier.btp_lot_devis l ON l.projet_id = p.id JOIN immobilier.btp_poste_devis po ON po.lot_id = l.id AND po.nom_poste = 'ELEVATION ETAGE 2'
-JOIN immobilier.btp_ligne_devis li ON li.poste_id = po.id
-JOIN (VALUES
-  (1, 1.0000, 986000.00, 1.0000, 986000.00, 0.0000, 0.00),
-  (2, 1.0000, 75000.00, 1.0000, 75000.00, 0.0000, 0.00),
-  (3, 1.0000, 206640.00, 1.0000, 206640.00, 0.0000, 0.00),
-  (4, 1.0000, 175644.00, 1.0000, 175644.00, 0.0000, 0.00),
-  (5, 1.0000, 152064.00, 1.0000, 152064.00, 0.0000, 0.00),
-  (6, 1.0000, 81000.00, 0.0000, 0.00, 1.0000, 81000.00),
-  (7, 1.0000, 61200.00, 0.0000, 0.00, 1.0000, 61200.00),
-  (8, 1.0000, 48600.00, 0.0000, 0.00, 1.0000, 48600.00),
-  (9, 1.0000, 389367.00, 0.0000, 0.00, 1.0000, 389367.00),
-  (10, 1.0000, 330961.95, 0.0000, 0.00, 1.0000, 330961.95),
-  (11, 1.0000, 179344.80, 0.0000, 0.00, 1.0000, 179344.80),
-  (12, 1.0000, 2100000.00, 0.0000, 0.00, 1.0000, 2100000.00),
-  (13, 1.0000, 783180.00, 0.0000, 0.00, 1.0000, 783180.00),
-  (14, 1.0000, 234625.00, 0.0000, 0.00, 1.0000, 234625.00),
-  (15, 1.0000, 623000.00, 0.0000, 0.00, 1.0000, 623000.00),
-  (16, 1.0000, 189000.00, 0.0000, 0.00, 1.0000, 189000.00),
-  (17, 1.0000, 579600.00, 0.0000, 0.00, 1.0000, 579600.00),
-  (18, 1.0000, 161000.00, 0.0000, 0.00, 1.0000, 161000.00),
-  (19, 1.0000, 41400.00, 0.0000, 0.00, 1.0000, 41400.00)
-) AS v(ordre, c_pct, c_mt, p_pct, p_mt, n_pct, n_mt) ON v.ordre = li.ordre
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND st.numero = 1
-ON CONFLICT (situation_id, ligne_devis_id) DO NOTHING;
-
-INSERT INTO immobilier.btp_situation_ligne (id, situation_id, ligne_devis_id, avancement_cumul_pct, montant_cumul_ht, avancement_precedent_pct, montant_precedent_ht, avancement_periode_pct, montant_periode_ht)
-SELECT nextval('immobilier.seq_btp_situation_ligne'), st.id, li.id, v.c_pct, v.c_mt, v.p_pct, v.p_mt, v.n_pct, v.n_mt
-FROM immobilier.btp_situation_travaux st JOIN immobilier.btp_projet p ON p.id = st.projet_id
-JOIN immobilier.btp_lot_devis l ON l.projet_id = p.id JOIN immobilier.btp_poste_devis po ON po.lot_id = l.id AND po.nom_poste = 'PLOMBERIE ET ASSAINISSEMENT'
-JOIN immobilier.btp_ligne_devis li ON li.poste_id = po.id
-JOIN (VALUES
-  (1, 1.0000, 90000.00, 0.0000, 0.00, 1.0000, 90000.00),
-  (2, 1.0000, 304000.00, 0.0000, 0.00, 1.0000, 304000.00),
-  (3, 1.0000, 219000.00, 0.0000, 0.00, 1.0000, 219000.00),
-  (4, 1.0000, 66400.00, 0.0000, 0.00, 1.0000, 66400.00),
-  (5, 1.0000, 45000.00, 0.0000, 0.00, 1.0000, 45000.00),
-  (6, 1.0000, 112500.00, 0.0000, 0.00, 1.0000, 112500.00),
-  (7, 1.0000, 315000.00, 0.0000, 0.00, 1.0000, 315000.00),
-  (8, 1.0000, 495000.00, 0.0000, 0.00, 1.0000, 495000.00),
-  (9, 1.0000, 337500.00, 0.0000, 0.00, 1.0000, 337500.00),
-  (10, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00),
-  (11, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00),
-  (12, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00),
-  (13, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00),
-  (14, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00),
-  (15, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00),
-  (16, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00),
-  (17, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00),
-  (18, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00),
-  (19, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00),
-  (20, 1.0000, 1000000.00, 1.0000, 1000000.00, 0.0000, 0.00),
-  (21, 1.0000, 525000.00, 1.0000, 525000.00, 0.0000, 0.00)
-) AS v(ordre, c_pct, c_mt, p_pct, p_mt, n_pct, n_mt) ON v.ordre = li.ordre
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND st.numero = 1
-ON CONFLICT (situation_id, ligne_devis_id) DO NOTHING;
-
-INSERT INTO immobilier.btp_situation_ligne (id, situation_id, ligne_devis_id, avancement_cumul_pct, montant_cumul_ht, avancement_precedent_pct, montant_precedent_ht, avancement_periode_pct, montant_periode_ht)
-SELECT nextval('immobilier.seq_btp_situation_ligne'), st.id, li.id, v.c_pct, v.c_mt, v.p_pct, v.p_mt, v.n_pct, v.n_mt
-FROM immobilier.btp_situation_travaux st JOIN immobilier.btp_projet p ON p.id = st.projet_id
-JOIN immobilier.btp_lot_devis l ON l.projet_id = p.id JOIN immobilier.btp_poste_devis po ON po.lot_id = l.id AND po.nom_poste = 'ELECTRICITE - CLIMATISATION'
-JOIN immobilier.btp_ligne_devis li ON li.poste_id = po.id
-JOIN (VALUES
-  (1, 1.0000, 160000.00, 1.0000, 160000.00, 0.0000, 0.00),
-  (2, 1.0000, 15000.00, 1.0000, 15000.00, 0.0000, 0.00),
-  (3, 1.0000, 375000.00, 0.0000, 0.00, 1.0000, 375000.00),
-  (4, 1.0000, 337500.00, 0.0000, 0.00, 1.0000, 337500.00),
-  (5, 1.0000, 375000.00, 0.0000, 0.00, 1.0000, 375000.00),
-  (6, 1.0000, 525000.00, 0.0000, 0.00, 1.0000, 525000.00),
-  (7, 1.0000, 564000.00, 0.0000, 0.00, 1.0000, 564000.00),
-  (8, 1.0000, 210000.00, 0.0000, 0.00, 1.0000, 210000.00),
-  (9, 1.0000, 97500.00, 0.0000, 0.00, 1.0000, 97500.00),
-  (10, 1.0000, 10000.00, 0.0000, 0.00, 1.0000, 10000.00),
-  (11, 1.0000, 16000.00, 0.0000, 0.00, 1.0000, 16000.00),
-  (12, 1.0000, 24000.00, 0.0000, 0.00, 1.0000, 24000.00),
-  (13, 1.0000, 33000.00, 0.0000, 0.00, 1.0000, 33000.00),
-  (14, 1.0000, 20000.00, 0.0000, 0.00, 1.0000, 20000.00),
-  (15, 1.0000, 150000.00, 0.0000, 0.00, 1.0000, 150000.00),
-  (16, 1.0000, 64000.00, 0.0000, 0.00, 1.0000, 64000.00),
-  (17, 1.0000, 56000.00, 0.0000, 0.00, 1.0000, 56000.00),
-  (18, 1.0000, 22500.00, 0.0000, 0.00, 1.0000, 22500.00),
-  (19, 1.0000, 42000.00, 0.0000, 0.00, 1.0000, 42000.00),
-  (20, 1.0000, 12000.00, 0.0000, 0.00, 1.0000, 12000.00),
-  (21, 1.0000, 30000.00, 0.0000, 0.00, 1.0000, 30000.00),
-  (22, 0.0000, 0.00, 0.0000, 0.00, 0.0000, 0.00)
-) AS v(ordre, c_pct, c_mt, p_pct, p_mt, n_pct, n_mt) ON v.ordre = li.ordre
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND st.numero = 1
-ON CONFLICT (situation_id, ligne_devis_id) DO NOTHING;
-
-INSERT INTO immobilier.btp_situation_ligne (id, situation_id, ligne_devis_id, avancement_cumul_pct, montant_cumul_ht, avancement_precedent_pct, montant_precedent_ht, avancement_periode_pct, montant_periode_ht)
-SELECT nextval('immobilier.seq_btp_situation_ligne'), st.id, li.id, v.c_pct, v.c_mt, v.p_pct, v.p_mt, v.n_pct, v.n_mt
-FROM immobilier.btp_situation_travaux st JOIN immobilier.btp_projet p ON p.id = st.projet_id
-JOIN immobilier.btp_lot_devis l ON l.projet_id = p.id JOIN immobilier.btp_poste_devis po ON po.lot_id = l.id AND po.nom_poste = 'REVETEMENTS DURS'
-JOIN immobilier.btp_ligne_devis li ON li.poste_id = po.id
-JOIN (VALUES
-  (1, 1.0000, 634824.00, 0.0000, 0.00, 1.0000, 634824.00),
-  (2, 1.0000, 2909610.00, 0.0000, 0.00, 1.0000, 2909610.00),
-  (3, 1.0000, 1501500.00, 0.0000, 0.00, 1.0000, 1501500.00)
-) AS v(ordre, c_pct, c_mt, p_pct, p_mt, n_pct, n_mt) ON v.ordre = li.ordre
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND st.numero = 1
-ON CONFLICT (situation_id, ligne_devis_id) DO NOTHING;
-
-INSERT INTO immobilier.btp_situation_ligne (id, situation_id, ligne_devis_id, avancement_cumul_pct, montant_cumul_ht, avancement_precedent_pct, montant_precedent_ht, avancement_periode_pct, montant_periode_ht)
-SELECT nextval('immobilier.seq_btp_situation_ligne'), st.id, li.id, v.c_pct, v.c_mt, v.p_pct, v.p_mt, v.n_pct, v.n_mt
-FROM immobilier.btp_situation_travaux st JOIN immobilier.btp_projet p ON p.id = st.projet_id
-JOIN immobilier.btp_lot_devis l ON l.projet_id = p.id JOIN immobilier.btp_poste_devis po ON po.lot_id = l.id AND po.nom_poste = 'MENUISERIE BOIS - ALUMINIUM'
-JOIN immobilier.btp_ligne_devis li ON li.poste_id = po.id
-JOIN (VALUES
-  (1, 1.0000, 1237500.00, 0.0000, 0.00, 1.0000, 1237500.00),
-  (2, 1.0000, 435000.00, 0.0000, 0.00, 1.0000, 435000.00),
-  (3, 1.0000, 675000.00, 0.0000, 0.00, 1.0000, 675000.00),
-  (4, 1.0000, 875000.00, 0.0000, 0.00, 1.0000, 875000.00),
-  (5, 1.0000, 247500.00, 0.0000, 0.00, 1.0000, 247500.00),
-  (6, 1.0000, 495000.00, 0.0000, 0.00, 1.0000, 495000.00),
-  (7, 1.0000, 360000.00, 0.0000, 0.00, 1.0000, 360000.00),
-  (8, 1.0000, 1258400.00, 0.0000, 0.00, 1.0000, 1258400.00)
-) AS v(ordre, c_pct, c_mt, p_pct, p_mt, n_pct, n_mt) ON v.ordre = li.ordre
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND st.numero = 1
-ON CONFLICT (situation_id, ligne_devis_id) DO NOTHING;
-
-INSERT INTO immobilier.btp_situation_ligne (id, situation_id, ligne_devis_id, avancement_cumul_pct, montant_cumul_ht, avancement_precedent_pct, montant_precedent_ht, avancement_periode_pct, montant_periode_ht)
-SELECT nextval('immobilier.seq_btp_situation_ligne'), st.id, li.id, v.c_pct, v.c_mt, v.p_pct, v.p_mt, v.n_pct, v.n_mt
-FROM immobilier.btp_situation_travaux st JOIN immobilier.btp_projet p ON p.id = st.projet_id
-JOIN immobilier.btp_lot_devis l ON l.projet_id = p.id JOIN immobilier.btp_poste_devis po ON po.lot_id = l.id AND po.nom_poste = 'PEINTURE'
-JOIN immobilier.btp_ligne_devis li ON li.poste_id = po.id
-JOIN (VALUES
-  (1, 1.0000, 2298725.00, 0.0000, 0.00, 1.0000, 2298725.00),
-  (2, 1.0000, 1086000.00, 0.0000, 0.00, 1.0000, 1086000.00),
-  (3, 1.0000, 480030.00, 0.0000, 0.00, 1.0000, 480030.00)
-) AS v(ordre, c_pct, c_mt, p_pct, p_mt, n_pct, n_mt) ON v.ordre = li.ordre
-WHERE p.nom = 'TRIPLEX SIMEON 6 PI?CES' AND st.numero = 1
-ON CONFLICT (situation_id, ligne_devis_id) DO NOTHING;
+INSERT INTO immobilier.btp_paiement (
+    facture_id, date_paiement, montant, mode_paiement, reference_transaction, commentaire
+)
+SELECT
+    id, TIMESTAMPTZ '2026-11-18 00:00:00+00', 3500000.00, 'VIREMENT', 'VIR-ECOBANK-20261118-01', 'Premier versement client'
+FROM immobilier.btp_facture WHERE numero_facture = 'FAC-2026-001';

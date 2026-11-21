@@ -3,6 +3,7 @@ package com.wscicloud.service.immobilier.domain.entities;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
@@ -21,56 +22,39 @@ public class BtpSituationTravaux implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @SequenceGenerator(
-            name = "gen_btp_situation_travaux",
-            sequenceName = "seq_btp_situation_travaux",
-            initialValue = 1,
-            allocationSize = 1)
-    @GeneratedValue(generator = "gen_btp_situation_travaux")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "projet_id", nullable = false)
     private Long projetId;
 
-    @Column(name = "numero", nullable = false)
-    private Integer numero;
-
-    @Column(name = "mois", nullable = false)
-    private Integer mois;
-
-    @Column(name = "annee", nullable = false)
-    private Integer annee;
+    @Column(name = "numero_situation", nullable = false)
+    private String numeroSituation;
 
     @Column(name = "date_situation", nullable = false)
     private LocalDate dateSituation;
 
-    @Column(name = "montant_marche_ht")
-    private BigDecimal montantMarcheHt;
+    @Column(name = "periode_debut")
+    private LocalDate periodeDebut;
 
-    @Column(name = "montant_cumule_ht")
-    private BigDecimal montantCumuleHt;
+    @Column(name = "periode_fin")
+    private LocalDate periodeFin;
 
-    @Column(name = "montant_precedent_ht")
-    private BigDecimal montantPrecedentHt;
+    @Column(name = "taux_avancement_pct", nullable = false)
+    private BigDecimal tauxAvancementPct;
 
-    @Column(name = "montant_periode_ht")
+    @Column(name = "montant_periode_ht", nullable = false)
     private BigDecimal montantPeriodeHt;
 
-    @Column(name = "remise_cumul")
-    private BigDecimal remiseCumul;
+    @Column(name = "montant_cumule_ht", nullable = false)
+    private BigDecimal montantCumuleHt;
 
-    @Column(name = "remise_precedent")
-    private BigDecimal remisePrecedent;
-
-    @Column(name = "remise_periode")
-    private BigDecimal remisePeriode;
-
-    @Column(name = "montant_apres_remise")
-    private BigDecimal montantApresRemise;
-
-    @Column(name = "avancement_global_pct")
-    private BigDecimal avancementGlobalPct;
-
-    @Column(name = "statut")
+    @Column(name = "statut", nullable = false)
     private String statut;
+
+    @Column(name = "observations")
+    private String observations;
+
+    @Column(name = "cree_le", nullable = false)
+    private OffsetDateTime creeLe;
 }

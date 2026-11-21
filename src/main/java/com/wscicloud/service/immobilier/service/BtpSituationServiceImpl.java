@@ -2,11 +2,8 @@ package com.wscicloud.service.immobilier.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,30 +11,25 @@ import org.springframework.stereotype.Service;
 import com.wscicloud.service.immobilier.domain.dto.BtpSituationCompleteDto;
 import com.wscicloud.service.immobilier.domain.dto.BtpSituationLigneDto;
 import com.wscicloud.service.immobilier.domain.dto.BtpSituationTravauxDto;
+import com.wscicloud.service.immobilier.domain.entities.BtpDevis;
 import com.wscicloud.service.immobilier.domain.entities.BtpLigneDevis;
-import com.wscicloud.service.immobilier.domain.entities.BtpLotDevis;
-import com.wscicloud.service.immobilier.domain.entities.BtpPosteDevis;
-import com.wscicloud.service.immobilier.domain.entities.BtpProjet;
 import com.wscicloud.service.immobilier.domain.entities.BtpSituationLigne;
 import com.wscicloud.service.immobilier.domain.entities.BtpSituationTravaux;
+import com.wscicloud.service.immobilier.domain.mapper.BtpSituationLigneMapper;
 import com.wscicloud.service.immobilier.domain.mapper.BtpSituationTravauxMapper;
+import com.wscicloud.service.immobilier.domain.repository.BtpDevisRepository;
 import com.wscicloud.service.immobilier.domain.repository.BtpLigneDevisRepository;
-import com.wscicloud.service.immobilier.domain.repository.BtpLotDevisRepository;
-import com.wscicloud.service.immobilier.domain.repository.BtpPosteDevisRepository;
 import com.wscicloud.service.immobilier.domain.repository.BtpProjetRepository;
 import com.wscicloud.service.immobilier.domain.repository.BtpSituationLigneRepository;
 import com.wscicloud.service.immobilier.domain.repository.BtpSituationTravauxRepository;
-import com.wscicloud.service.immobilier.service.calcul.BtpMontants;
+import com.wscicloud.service.immobilier.service.calcul.BtpDevisCalculator;
 import com.wscicloud.service.immobilier.service.calcul.BtpSituationCalculator;
+import com.wscicloud.service.immobilier.service.calcul.BtpStatuts;
 
 import jakarta.transaction.Transactional;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Transactional
-@Getter
-@Setter
 @Service
 @Slf4j
 public class BtpSituationServiceImpl implements BtpSituationService {
@@ -46,248 +38,213 @@ public class BtpSituationServiceImpl implements BtpSituationService {
     private BtpSituationTravauxRepository situationRepository;
 
     @Autowired
-    private BtpSituationLigneRepository situationLigneRepository;
+    private BtpSituationLigneRepository ligneRepository;
 
     @Autowired
-    private BtpSituationTravauxMapper situationMapper;
+    private BtpLigneDevisRepository ligneDevisRepository;
+
+    @Autowired
+    private BtpDevisRepository devisRepository;
 
     @Autowired
     private BtpProjetRepository projetRepository;
 
     @Autowired
-    private BtpLotDevisRepository lotRepository;
+    private BtpSituationTravauxMapper situationMapper;
 
     @Autowired
-    private BtpPosteDevisRepository posteRepository;
+    private BtpSituationLigneMapper ligneMapper;
 
-    @Autowired
-    private BtpLigneDevisRepository ligneDevisRepository;
-
-    private BtpSituationTravaux getSituation(Long id) {
-        return situationRepository
-                .findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Situation de travaux introuvable : " + id));
+    @Override
+    public List<BtpSituationTravauxDto> listerParProjet(Long projetId) {
+        return situationMapper.modeleToDto(situationRepository.findByProjetIdOrderByDateSituationAscIdAsc(projetId));
     }
 
     @Override
-    public BtpSituationCompleteDto generer(Long projetId, Integer mois, Integer annee) {
-        if (mois == null || mois < 1 || mois > 12 || annee == null) {
-            throw new IllegalArgumentException("Mois (1-12) et annee obligatoires");
-        }
-        projetRepository
-                .findById(projetId)
-                .orElseThrow(() -> new IllegalArgumentException("Projet BTP introuvable : " + projetId));
-
-        List<BtpSituationTravaux> existantes = situationRepository.findByProjetIdOrderByNumeroDesc(projetId);
-        boolean doublon = existantes.stream().anyMatch(s -> mois.equals(s.getMois()) && annee.equals(s.getAnnee()));
-        if (doublon) {
-            throw new IllegalStateException("Une situation existe deja pour " + mois + "/" + annee);
-        }
-        BtpSituationTravaux precedente = existantes.isEmpty() ? null : existantes.get(0);
-
-        Map<Long, BigDecimal> cumulPrecedent = new HashMap<>();
-        if (precedente != null) {
-            situationLigneRepository
-                    .findBySituationId(precedente.getId())
-                    .forEach(l -> cumulPrecedent.put(l.getLigneDevisId(), BtpMontants.nz(l.getAvancementCumulPct())));
-        }
-
-        BtpSituationTravaux situation = new BtpSituationTravaux();
-        situation.setProjetId(projetId);
-        situation.setNumero(precedente == null ? 1 : precedente.getNumero() + 1);
-        situation.setMois(mois);
-        situation.setAnnee(annee);
-        situation.setDateSituation(LocalDate.of(annee, mois, 1).with(TemporalAdjusters.lastDayOfMonth()));
-        situation.setStatut("BROUILLON");
-        situation = situationRepository.save(situation);
-
-        for (BtpLotDevis lot : lotRepository.findByProjetIdOrderByOrdre(projetId)) {
-            for (BtpPosteDevis poste : posteRepository.findByLotIdOrderByOrdre(lot.getId())) {
-                for (BtpLigneDevis ligne : ligneDevisRepository.findByPosteIdOrderByOrdre(poste.getId())) {
-                    BigDecimal precedentPct = cumulPrecedent.getOrDefault(ligne.getId(), BigDecimal.ZERO);
-                    BtpSituationLigne sl = new BtpSituationLigne();
-                    sl.setSituationId(situation.getId());
-                    sl.setLigneDevisId(ligne.getId());
-                    sl.setAvancementPrecedentPct(precedentPct);
-                    sl.setAvancementCumulPct(precedentPct);
-                    situationLigneRepository.save(sl);
-                }
-            }
-        }
-        return recalculer(situation.getId());
+    public BtpSituationCompleteDto lire(Long situationId) {
+        return versComplet(trouverSituation(situationId));
     }
 
     @Override
-    public BtpSituationCompleteDto findById(Long situationId) {
-        return complete(getSituation(situationId));
+    public BtpSituationTravauxDto creer(BtpSituationTravauxDto dto) {
+        if (dto.getProjetId() == null || !projetRepository.existsById(dto.getProjetId())) {
+            throw new IllegalArgumentException("Projet introuvable : " + dto.getProjetId());
+        }
+        if (situationRepository.existsByProjetIdAndNumeroSituation(dto.getProjetId(), dto.getNumeroSituation())) {
+            throw new IllegalArgumentException("Le numero de situation existe deja : " + dto.getNumeroSituation());
+        }
+        BtpSituationTravaux situation = situationMapper.dtoToModele(dto);
+        situation.setId(null);
+        situation.setCreeLe(OffsetDateTime.now());
+        if (situation.getDateSituation() == null) {
+            situation.setDateSituation(LocalDate.now());
+        }
+        if (situation.getStatut() == null) {
+            situation.setStatut(BtpStatuts.SITUATION_BROUILLON);
+        }
+        situation.setMontantPeriodeHt(BigDecimal.ZERO);
+        situation.setMontantCumuleHt(BigDecimal.ZERO);
+        situation.setTauxAvancementPct(BigDecimal.ZERO);
+        BtpSituationTravaux sauvee = situationRepository.save(situation);
+        return situationMapper.modeleToDto(recalculer(sauvee));
     }
 
     @Override
-    public List<BtpSituationTravauxDto> findByProjet(Long projetId) {
-        return situationMapper.modeleToDto(situationRepository.findByProjetIdOrderByNumeroDesc(projetId));
+    public BtpSituationTravauxDto modifier(BtpSituationTravauxDto dto) {
+        if (dto.getId() == null) {
+            throw new IllegalArgumentException("L'identifiant de la situation est obligatoire");
+        }
+        BtpSituationTravaux existante = trouverSituation(dto.getId());
+        if (!existante.getNumeroSituation().equals(dto.getNumeroSituation())
+                && situationRepository.existsByProjetIdAndNumeroSituation(
+                        existante.getProjetId(), dto.getNumeroSituation())) {
+            throw new IllegalArgumentException("Le numero de situation existe deja : " + dto.getNumeroSituation());
+        }
+        existante.setNumeroSituation(dto.getNumeroSituation());
+        if (dto.getDateSituation() != null) {
+            existante.setDateSituation(dto.getDateSituation());
+        }
+        existante.setPeriodeDebut(dto.getPeriodeDebut());
+        existante.setPeriodeFin(dto.getPeriodeFin());
+        existante.setObservations(dto.getObservations());
+        return situationMapper.modeleToDto(recalculer(existante));
     }
 
     @Override
-    public BtpSituationCompleteDto saisirAvancement(Long situationId, List<BtpSituationLigneDto> lignes) {
-        BtpSituationTravaux situation = getSituation(situationId);
-        if (!"BROUILLON".equals(situation.getStatut())) {
-            throw new IllegalStateException("Seule une situation en BROUILLON peut etre modifiee");
-        }
-        Map<Long, BtpSituationLigne> parLigneDevis = new HashMap<>();
-        situationLigneRepository.findBySituationId(situationId).forEach(l -> parLigneDevis.put(l.getLigneDevisId(), l));
-
-        for (BtpSituationLigneDto dto : lignes) {
-            BtpSituationLigne sl = parLigneDevis.get(dto.getLigneDevisId());
-            if (sl == null) {
-                throw new IllegalArgumentException("Ligne de devis absente de la situation : " + dto.getLigneDevisId());
-            }
-            BigDecimal pct = BtpMontants.nz(dto.getAvancementCumulPct());
-            if (pct.signum() < 0 || pct.compareTo(BigDecimal.ONE) > 0) {
-                throw new IllegalArgumentException("L'avancement doit etre compris entre 0 et 1 (0 % - 100 %)");
-            }
-            sl.setAvancementCumulPct(pct);
-            situationLigneRepository.save(sl);
-        }
-        return recalculer(situationId);
-    }
-
-    @Override
-    public BtpSituationCompleteDto recalculer(Long situationId) {
-        BtpSituationTravaux situation = getSituation(situationId);
-        BtpProjet projet = projetRepository.findById(situation.getProjetId()).orElseThrow();
-
-        BigDecimal marche = BigDecimal.ZERO;
-        BigDecimal cumul = BigDecimal.ZERO;
-        BigDecimal precedent = BigDecimal.ZERO;
-        for (BtpSituationLigne sl : situationLigneRepository.findBySituationId(situationId)) {
-            BigDecimal montantMarche = ligneDevisRepository
-                    .findById(sl.getLigneDevisId())
-                    .map(BtpLigneDevis::getMontantHt)
-                    .orElse(BigDecimal.ZERO);
-            BtpSituationCalculator.Ligne calc = BtpSituationCalculator.calculerLigne(
-                    montantMarche, sl.getAvancementCumulPct(), sl.getAvancementPrecedentPct());
-            sl.setMontantCumulHt(calc.montantCumul());
-            sl.setMontantPrecedentHt(calc.montantPrecedent());
-            sl.setAvancementPeriodePct(calc.avancementPeriodePct());
-            sl.setMontantPeriodeHt(calc.montantPeriode());
-            situationLigneRepository.save(sl);
-            marche = marche.add(montantMarche);
-            cumul = cumul.add(calc.montantCumul());
-            precedent = precedent.add(calc.montantPrecedent());
-        }
-
-        BtpSituationCalculator.Totaux t =
-                BtpSituationCalculator.totaliser(marche, cumul, precedent, projet.getRemiseMontant());
-        situation.setMontantMarcheHt(t.marche());
-        situation.setMontantCumuleHt(t.cumul());
-        situation.setMontantPrecedentHt(t.precedent());
-        situation.setMontantPeriodeHt(t.periode());
-        situation.setRemiseCumul(t.remiseCumul());
-        situation.setRemisePrecedent(t.remisePrecedent());
-        situation.setRemisePeriode(t.remisePeriode());
-        situation.setMontantApresRemise(t.apresRemise());
-        situation.setAvancementGlobalPct(t.avancementGlobalPct());
-        situationRepository.save(situation);
-        return complete(situation);
-    }
-
-    @Override
-    public BtpSituationCompleteDto valider(Long situationId) {
-        BtpSituationTravaux situation = getSituation(situationId);
-        if (!"BROUILLON".equals(situation.getStatut())) {
-            throw new IllegalStateException("Seule une situation en BROUILLON peut etre validee");
-        }
-        recalculer(situationId);
-        situation.setStatut("VALIDEE");
-        situationRepository.save(situation);
-        return complete(situation);
-    }
-
-    @Override
-    public BtpSituationCompleteDto marquerFacturee(Long situationId) {
-        BtpSituationTravaux situation = getSituation(situationId);
-        if (!"VALIDEE".equals(situation.getStatut())) {
-            throw new IllegalStateException("Seule une situation VALIDEE peut etre facturee");
-        }
-        situation.setStatut("FACTUREE");
-        situationRepository.save(situation);
-        return complete(situation);
-    }
-
-    @Override
-    public void delete(Long situationId) {
-        BtpSituationTravaux situation = getSituation(situationId);
-        if ("FACTUREE".equals(situation.getStatut())) {
-            throw new IllegalStateException("Une situation facturee ne peut pas etre supprimee");
-        }
+    public void supprimer(Long situationId) {
+        BtpSituationTravaux situation = trouverSituation(situationId);
+        ligneRepository.deleteBySituationId(situationId);
         situationRepository.delete(situation);
     }
 
-    private BtpSituationCompleteDto complete(BtpSituationTravaux situation) {
-        BtpSituationCompleteDto result = new BtpSituationCompleteDto();
-        result.setSituation(situationMapper.modeleToDto(situation));
-        BtpProjet projet = projetRepository.findById(situation.getProjetId()).orElseThrow();
-
-        Map<Long, BtpSituationCompleteDto.RecapPoste> recap = new LinkedHashMap<>();
-        Map<Long, BtpPosteDevis> postes = new HashMap<>();
-        Map<Long, BtpLotDevis> lots = new HashMap<>();
-        BigDecimal totalGo = BigDecimal.ZERO;
-        BigDecimal totalSo = BigDecimal.ZERO;
-
-        for (BtpSituationLigne sl : situationLigneRepository.findBySituationId(situation.getId())) {
-            BtpLigneDevis ld =
-                    ligneDevisRepository.findById(sl.getLigneDevisId()).orElse(null);
-            if (ld == null) {
-                continue;
-            }
-            BtpPosteDevis poste = postes.computeIfAbsent(
-                    ld.getPosteId(), id -> posteRepository.findById(id).orElseThrow());
-            BtpLotDevis lot = lots.computeIfAbsent(
-                    poste.getLotId(), id -> lotRepository.findById(id).orElseThrow());
-
-            BtpSituationCompleteDto.LigneDetail d = new BtpSituationCompleteDto.LigneDetail();
-            d.setSituationLigneId(sl.getId());
-            d.setLigneDevisId(ld.getId());
-            d.setCodeLot(lot.getCodeLot());
-            d.setNomPoste(poste.getNomPoste());
-            d.setSousEnsemble(ld.getSousEnsemble());
-            d.setDesignation(ld.getDesignation());
-            d.setUnite(ld.getUnite());
-            d.setQuantite(ld.getQuantite());
-            d.setPrixUnitaire(ld.getPrixUnitaire());
-            d.setMontantMarcheHt(ld.getMontantHt());
-            d.setAvancementCumulPct(sl.getAvancementCumulPct());
-            d.setMontantCumulHt(sl.getMontantCumulHt());
-            d.setAvancementPrecedentPct(sl.getAvancementPrecedentPct());
-            d.setMontantPrecedentHt(sl.getMontantPrecedentHt());
-            d.setAvancementPeriodePct(sl.getAvancementPeriodePct());
-            d.setMontantPeriodeHt(sl.getMontantPeriodeHt());
-            result.getLignes().add(d);
-
-            BtpSituationCompleteDto.RecapPoste r = recap.computeIfAbsent(poste.getId(), id -> {
-                BtpSituationCompleteDto.RecapPoste rp = new BtpSituationCompleteDto.RecapPoste();
-                rp.setCodeLot(lot.getCodeLot());
-                rp.setNomPoste(poste.getNomPoste());
-                return rp;
-            });
-            r.setMontantMarcheHt(r.getMontantMarcheHt().add(BtpMontants.nz(ld.getMontantHt())));
-            r.setMontantCumulHt(r.getMontantCumulHt().add(BtpMontants.nz(sl.getMontantCumulHt())));
-            r.setMontantPrecedentHt(r.getMontantPrecedentHt().add(BtpMontants.nz(sl.getMontantPrecedentHt())));
-            r.setMontantPeriodeHt(r.getMontantPeriodeHt().add(BtpMontants.nz(sl.getMontantPeriodeHt())));
-
-            if ("GO".equals(lot.getCodeLot())) {
-                totalGo = totalGo.add(BtpMontants.nz(sl.getMontantCumulHt()));
-            } else if ("SO".equals(lot.getCodeLot())) {
-                totalSo = totalSo.add(BtpMontants.nz(sl.getMontantCumulHt()));
-            }
+    @Override
+    public BtpSituationTravauxDto changerStatut(Long situationId, String statut) {
+        if (statut == null || !BtpStatuts.SITUATION_AUTORISES.contains(statut)) {
+            throw new IllegalArgumentException("Statut de situation invalide : " + statut);
         }
-        recap.values()
-                .forEach(r -> r.setAvancementPct(BtpMontants.ratio(r.getMontantCumulHt(), r.getMontantMarcheHt())));
-        result.setRecapitulatif(List.copyOf(recap.values()));
-        result.setTotalGrosOeuvre(BtpMontants.montant(totalGo));
-        result.setTotalSecondOeuvre(BtpMontants.montant(totalSo));
-        result.setAlerteAvancement(BtpSituationCalculator.alerteAvancement(
-                situation.getAvancementGlobalPct(), projet.getTauxAvancementSeuilAlerte()));
-        return result;
+        BtpSituationTravaux situation = trouverSituation(situationId);
+        situation.setStatut(statut);
+        return situationMapper.modeleToDto(situationRepository.save(situation));
+    }
+
+    @Override
+    public BtpSituationCompleteDto ajouterLigne(Long situationId, BtpSituationLigneDto dto) {
+        BtpSituationTravaux situation = trouverSituation(situationId);
+        if (ligneRepository.existsBySituationIdAndLigneDevisId(situationId, dto.getLigneDevisId())) {
+            throw new IllegalArgumentException(
+                    "La ligne de devis " + dto.getLigneDevisId() + " est deja presente dans la situation");
+        }
+        ligneRepository.save(construireLigne(situation, dto, null));
+        return recalculerEtLire(situation);
+    }
+
+    @Override
+    public BtpSituationCompleteDto modifierLigne(Long situationId, Long ligneId, BtpSituationLigneDto dto) {
+        BtpSituationTravaux situation = trouverSituation(situationId);
+        BtpSituationLigne existante = trouverLigne(situationId, ligneId);
+        ligneRepository.save(construireLigne(situation, dto, existante));
+        return recalculerEtLire(situation);
+    }
+
+    @Override
+    public BtpSituationCompleteDto supprimerLigne(Long situationId, Long ligneId) {
+        BtpSituationTravaux situation = trouverSituation(situationId);
+        ligneRepository.delete(trouverLigne(situationId, ligneId));
+        return recalculerEtLire(situation);
+    }
+
+    private BtpSituationLigne construireLigne(
+            BtpSituationTravaux situation, BtpSituationLigneDto dto, BtpSituationLigne existante) {
+        if (dto.getQuantitePeriode() != null && dto.getQuantitePeriode().signum() < 0) {
+            throw new IllegalArgumentException("La quantite de la periode ne peut pas etre negative");
+        }
+        if (dto.getQuantitePrecedente() != null && dto.getQuantitePrecedente().signum() < 0) {
+            throw new IllegalArgumentException("La quantite precedente ne peut pas etre negative");
+        }
+        BtpLigneDevis ligneDevis = ligneDevisRepository
+                .findById(dto.getLigneDevisId())
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Ligne de devis introuvable : " + dto.getLigneDevisId()));
+        BtpDevis devis = devisRepository
+                .findById(ligneDevis.getDevisId())
+                .orElseThrow(() -> new IllegalArgumentException("Devis introuvable : " + ligneDevis.getDevisId()));
+        if (!situation.getProjetId().equals(devis.getProjetId())) {
+            throw new IllegalArgumentException("La ligne de devis n'appartient pas au projet de la situation");
+        }
+
+        BtpSituationLigne ligne = ligneMapper.dtoToModele(dto);
+        ligne.setId(existante == null ? null : existante.getId());
+        ligne.setCreeLe(existante == null ? OffsetDateTime.now() : existante.getCreeLe());
+        ligne.setSituationId(situation.getId());
+        BigDecimal precedente = dto.getQuantitePrecedente() != null
+                ? dto.getQuantitePrecedente()
+                : quantiteDejaRealisee(situation, ligneDevis.getId());
+        ligne.setQuantitePrecedente(precedente);
+        ligne.setQuantiteCumulee(BtpSituationCalculator.quantiteCumulee(precedente, dto.getQuantitePeriode()));
+        ligne.setMontantPeriodeHt(
+                BtpSituationCalculator.montantLigne(dto.getQuantitePeriode(), ligneDevis.getPrixUnitaireHt()));
+        return ligne;
+    }
+
+    /** Quantites de la ligne de devis deja realisees dans les autres situations anterieures ou du meme jour. */
+    private BigDecimal quantiteDejaRealisee(BtpSituationTravaux courante, Long ligneDevisId) {
+        List<Long> idsAutres =
+                situationRepository.findByProjetIdOrderByDateSituationAscIdAsc(courante.getProjetId()).stream()
+                        .filter(s -> !s.getId().equals(courante.getId()))
+                        .filter(s -> !s.getDateSituation().isAfter(courante.getDateSituation()))
+                        .map(BtpSituationTravaux::getId)
+                        .toList();
+        if (idsAutres.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        return ligneRepository.findBySituationIdIn(idsAutres).stream()
+                .filter(l -> ligneDevisId.equals(l.getLigneDevisId()))
+                .map(BtpSituationLigne::getQuantitePeriode)
+                .filter(q -> q != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /** Equivalent Java du trigger fn_sync_situation_totaux. */
+    private BtpSituationTravaux recalculer(BtpSituationTravaux situation) {
+        List<BtpSituationLigne> lignes = ligneRepository.findBySituationIdOrderByIdAsc(situation.getId());
+        List<BtpSituationTravaux> situationsProjet =
+                situationRepository.findByProjetIdOrderByDateSituationAscIdAsc(situation.getProjetId());
+        BigDecimal cumulAutres = BtpSituationCalculator.cumulAutresSituations(situation, situationsProjet);
+        BigDecimal budget = BtpDevisCalculator.budget(
+                devisRepository.findByProjetIdAndStatutIn(situation.getProjetId(), BtpStatuts.DEVIS_BUDGET));
+        BtpSituationCalculator.Totaux totaux = BtpSituationCalculator.totaux(
+                lignes.stream().map(BtpSituationLigne::getMontantPeriodeHt).toList(), cumulAutres, budget);
+        situation.setMontantPeriodeHt(totaux.montantPeriodeHt());
+        situation.setMontantCumuleHt(totaux.montantCumuleHt());
+        situation.setTauxAvancementPct(totaux.tauxAvancementPct());
+        return situationRepository.save(situation);
+    }
+
+    private BtpSituationCompleteDto recalculerEtLire(BtpSituationTravaux situation) {
+        return versComplet(recalculer(situation));
+    }
+
+    private BtpSituationCompleteDto versComplet(BtpSituationTravaux situation) {
+        BtpSituationCompleteDto complet = new BtpSituationCompleteDto();
+        complet.setSituation(situationMapper.modeleToDto(situation));
+        complet.setLignes(ligneMapper.modeleToDto(ligneRepository.findBySituationIdOrderByIdAsc(situation.getId())));
+        return complet;
+    }
+
+    private BtpSituationTravaux trouverSituation(Long id) {
+        return situationRepository
+                .findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Situation introuvable : " + id));
+    }
+
+    private BtpSituationLigne trouverLigne(Long situationId, Long ligneId) {
+        BtpSituationLigne ligne = ligneRepository
+                .findById(ligneId)
+                .orElseThrow(() -> new IllegalArgumentException("Ligne de situation introuvable : " + ligneId));
+        if (!situationId.equals(ligne.getSituationId())) {
+            throw new IllegalArgumentException(
+                    "La ligne " + ligneId + " n'appartient pas a la situation " + situationId);
+        }
+        return ligne;
     }
 }

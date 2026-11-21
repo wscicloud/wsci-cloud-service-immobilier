@@ -2,6 +2,7 @@ package com.wscicloud.service.immobilier.domain.entities;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
@@ -20,38 +21,42 @@ public class BtpLigneDevis implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @SequenceGenerator(
-            name = "gen_btp_ligne_devis",
-            sequenceName = "seq_btp_ligne_devis",
-            initialValue = 1,
-            allocationSize = 1)
-    @GeneratedValue(generator = "gen_btp_ligne_devis")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "poste_id", nullable = false)
+    @Column(name = "devis_id", nullable = false)
+    private Long devisId;
+
+    @Column(name = "lot_id")
+    private Long lotId;
+
+    @Column(name = "poste_id")
     private Long posteId;
 
-    @Column(name = "sous_ensemble")
-    private String sousEnsemble;
+    @Column(name = "tache_id")
+    private Long tacheId;
+
+    @Column(name = "sous_tache_id")
+    private Long sousTacheId;
+
+    @Column(name = "ordre_affichage", nullable = false)
+    private Integer ordreAffichage;
 
     @Column(name = "designation", nullable = false)
     private String designation;
 
-    @Column(name = "unite", nullable = false)
+    @Column(name = "unite")
     private String unite;
 
-    @Column(name = "quantite")
+    @Column(name = "quantite", nullable = false)
     private BigDecimal quantite;
 
-    @Column(name = "prix_unitaire")
-    private BigDecimal prixUnitaire;
+    @Column(name = "prix_unitaire_ht", nullable = false)
+    private BigDecimal prixUnitaireHt;
 
-    @Column(name = "montant_ht")
+    @Column(name = "montant_ht", nullable = false)
     private BigDecimal montantHt;
 
-    @Column(name = "niveau")
-    private String niveau;
-
-    @Column(name = "ordre")
-    private Integer ordre;
+    @Column(name = "cree_le", nullable = false)
+    private OffsetDateTime creeLe;
 }

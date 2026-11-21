@@ -8,21 +8,22 @@ import com.wscicloud.service.immobilier.domain.dto.BtpSituationTravauxDto;
 
 public interface BtpSituationService {
 
-    /** Genere la situation du mois a partir de la precedente (M-1 repris automatiquement). */
-    BtpSituationCompleteDto generer(Long projetId, Integer mois, Integer annee);
+    List<BtpSituationTravauxDto> listerParProjet(Long projetId);
 
-    BtpSituationCompleteDto findById(Long situationId);
+    BtpSituationCompleteDto lire(Long situationId);
 
-    List<BtpSituationTravauxDto> findByProjet(Long projetId);
+    BtpSituationTravauxDto creer(BtpSituationTravauxDto dto);
 
-    /** Saisit l'avancement cumule par ligne puis recalcule la situation. */
-    BtpSituationCompleteDto saisirAvancement(Long situationId, List<BtpSituationLigneDto> lignes);
+    /** Modifie l'entete de la situation et recalcule ses totaux. */
+    BtpSituationTravauxDto modifier(BtpSituationTravauxDto dto);
 
-    BtpSituationCompleteDto recalculer(Long situationId);
+    void supprimer(Long situationId);
 
-    BtpSituationCompleteDto valider(Long situationId);
+    BtpSituationTravauxDto changerStatut(Long situationId, String statut);
 
-    BtpSituationCompleteDto marquerFacturee(Long situationId);
+    BtpSituationCompleteDto ajouterLigne(Long situationId, BtpSituationLigneDto ligne);
 
-    void delete(Long situationId);
+    BtpSituationCompleteDto modifierLigne(Long situationId, Long ligneId, BtpSituationLigneDto ligne);
+
+    BtpSituationCompleteDto supprimerLigne(Long situationId, Long ligneId);
 }

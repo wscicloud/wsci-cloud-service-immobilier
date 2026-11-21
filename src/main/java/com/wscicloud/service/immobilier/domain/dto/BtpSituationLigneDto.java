@@ -2,6 +2,7 @@ package com.wscicloud.service.immobilier.domain.dto;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -21,19 +22,17 @@ public class BtpSituationLigneDto implements Serializable {
 
     private Long id;
 
-    @NotNull private Long situationId;
+    private Long situationId;
 
     @NotNull private Long ligneDevisId;
 
-    private BigDecimal avancementCumulPct;
+    private BigDecimal quantitePrecedente;
 
-    private BigDecimal montantCumulHt;
+    private BigDecimal quantitePeriode;
 
-    private BigDecimal avancementPrecedentPct;
-
-    private BigDecimal montantPrecedentHt;
-
-    private BigDecimal avancementPeriodePct;
+    private BigDecimal quantiteCumulee;
 
     private BigDecimal montantPeriodeHt;
+
+    private OffsetDateTime creeLe;
 }

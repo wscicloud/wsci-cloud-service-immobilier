@@ -10,5 +10,7 @@ import com.wscicloud.service.immobilier.domain.entities.BtpFactureLigne;
 @Repository
 public interface BtpFactureLigneRepository extends JpaRepository<BtpFactureLigne, Long> {
 
-    List<BtpFactureLigne> findByFactureIdOrderByOrdre(Long factureId);
+    List<BtpFactureLigne> findByFactureIdOrderByIdAsc(Long factureId);
+
+    void deleteByFactureId(Long factureId);
 }

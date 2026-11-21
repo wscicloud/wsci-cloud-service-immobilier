@@ -3,6 +3,7 @@ package com.wscicloud.service.immobilier.domain.entities;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
@@ -21,8 +22,7 @@ public class BtpFacture implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @SequenceGenerator(name = "gen_btp_facture", sequenceName = "seq_btp_facture", initialValue = 1, allocationSize = 1)
-    @GeneratedValue(generator = "gen_btp_facture")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "projet_id", nullable = false)
@@ -31,48 +31,31 @@ public class BtpFacture implements Serializable {
     @Column(name = "situation_id")
     private Long situationId;
 
-    @Column(name = "numero", nullable = false)
-    private String numero;
+    @Column(name = "numero_facture", nullable = false)
+    private String numeroFacture;
 
-    @Column(name = "date_facture", nullable = false)
-    private LocalDate dateFacture;
+    @Column(name = "type_facture", nullable = false)
+    private String typeFacture;
+
+    @Column(name = "date_emission", nullable = false)
+    private LocalDate dateEmission;
 
     @Column(name = "date_echeance")
     private LocalDate dateEcheance;
 
-    @Column(name = "objet")
-    private String objet;
-
-    @Column(name = "montant_ht")
+    @Column(name = "montant_ht", nullable = false)
     private BigDecimal montantHt;
 
-    @Column(name = "tva_taux")
-    private BigDecimal tvaTaux;
+    /** Taux de TVA en pourcentage (ex : 18.00). */
+    @Column(name = "taux_tva", nullable = false)
+    private BigDecimal tauxTva;
 
-    @Column(name = "montant_tva")
-    private BigDecimal montantTva;
-
-    @Column(name = "retenue_garantie_taux")
-    private BigDecimal retenueGarantieTaux;
-
-    @Column(name = "retenue_garantie_montant")
-    private BigDecimal retenueGarantieMontant;
-
-    @Column(name = "avance_taux")
-    private BigDecimal avanceTaux;
-
-    @Column(name = "avance_montant")
-    private BigDecimal avanceMontant;
-
-    @Column(name = "montant_ttc")
+    @Column(name = "montant_ttc", nullable = false)
     private BigDecimal montantTtc;
 
-    @Column(name = "net_a_payer")
-    private BigDecimal netAPayer;
-
-    @Column(name = "montant_paye")
-    private BigDecimal montantPaye;
-
-    @Column(name = "statut")
+    @Column(name = "statut", nullable = false)
     private String statut;
+
+    @Column(name = "cree_le", nullable = false)
+    private OffsetDateTime creeLe;
 }

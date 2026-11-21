@@ -2,9 +2,9 @@ package com.wscicloud.service.immobilier.domain.dto;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -22,21 +22,27 @@ public class BtpLigneDevisDto implements Serializable {
 
     private Long id;
 
-    @NotNull private Long posteId;
+    private Long devisId;
 
-    private String sousEnsemble;
+    private Long lotId;
+
+    private Long posteId;
+
+    private Long tacheId;
+
+    private Long sousTacheId;
+
+    private Integer ordreAffichage;
 
     @NotBlank private String designation;
 
-    @NotBlank private String unite;
+    private String unite;
 
     private BigDecimal quantite;
 
-    private BigDecimal prixUnitaire;
+    private BigDecimal prixUnitaireHt;
 
     private BigDecimal montantHt;
 
-    private String niveau;
-
-    private Integer ordre;
+    private OffsetDateTime creeLe;
 }
