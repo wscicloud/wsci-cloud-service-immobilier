@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-@Table(name = "btp_poste_devis")
+@Table(name = "btp_poste_devis", schema = "immobilier")
 @EqualsAndHashCode(of = "id")
 public class BtpPosteDevis implements Serializable {
 

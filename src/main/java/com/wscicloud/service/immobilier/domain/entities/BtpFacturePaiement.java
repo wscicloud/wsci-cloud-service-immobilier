@@ -14,7 +14,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-@Table(name = "btp_facture_paiement")
+@Table(name = "btp_facture_paiement", schema = "immobilier")
 @EqualsAndHashCode(of = "id")
 public class BtpFacturePaiement implements Serializable {
 

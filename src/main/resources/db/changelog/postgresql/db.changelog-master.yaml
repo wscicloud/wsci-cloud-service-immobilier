@@ -1,4 +1,4 @@
 databaseChangeLog:
     - includeAll:
-          path: classpath*:db/changelog/postgresql/changes/immobilier/
+          path: classpath*:db/changelog/postgresql/changes/btp/
           errorIfMissingOrEmpty: false

@@ -13,7 +13,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-@Table(name = "refm_btp_tache_biblio")
+@Table(name = "refm_btp_tache_biblio", schema = "immobilier")
 @EqualsAndHashCode(of = "id")
 public class RefmBtpTacheBiblio implements Serializable {
 

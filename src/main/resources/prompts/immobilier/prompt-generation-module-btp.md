@@ -34,7 +34,7 @@ Données de démonstration issues des PDF/XLS : projet « TRIPLEX SIMEON 6 PIÈC
 
 ### 3.1 Script Liquibase (PostgreSQL)
 
-* Emplacement : `src/main/resources/db/changelog/postgresql/changes/immobilier/btp_09.02.sql` (suivre la numérotation de version courante ; voir skill `version-update-script`).
+* Emplacement : `../../db/changelog/postgresql/changes/btp` (suivre la numérotation de version courante ; voir skill `version-update-script`).
 * Enregistrer dans `db.changelog-master.yaml` **après** `caisse/` :
   ```yaml
   - includeAll:

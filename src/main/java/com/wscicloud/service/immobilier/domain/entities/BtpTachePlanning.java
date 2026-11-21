@@ -17,7 +17,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-@Table(name = "btp_tache_planning")
+@Table(name = "btp_tache_planning", schema = "immobilier")
 @EqualsAndHashCode(of = "id")
 public class BtpTachePlanning implements Serializable {
 
