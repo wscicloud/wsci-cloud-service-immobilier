@@ -1,12 +1,13 @@
 --liquibase formatted sql
 
 --changeset syao:2026-11-21-btp-10-data-referentiel context:btp-init labels:btp-init
-INSERT INTO immobilier.refm_btp_lot (code, libelle, description) VALUES
-('GO',  'Gros Œuvre',            'Études, installation, infrastructure, élévation et étanchéité'),
-('SO',  'Second Œuvre',          'Plomberie, électricité, revêtements, menuiserie et peinture'),
-('VRD', 'Aménagement Extérieur', 'Dallage parking, clôture et jardinage');
+INSERT INTO immobilier.refm_btp_lot (id, code, libelle, description) VALUES
+(nextval('immobilier.seq_refm_btp_lot'), 'GO',  'Gros Œuvre',            'Études, installation, infrastructure, élévation et étanchéité'),
+(nextval('immobilier.seq_refm_btp_lot'), 'SO',  'Second Œuvre',          'Plomberie, électricité, revêtements, menuiserie et peinture'),
+(nextval('immobilier.seq_refm_btp_lot'), 'VRD', 'Aménagement Extérieur', 'Dallage parking, clôture et jardinage');
 
-INSERT INTO immobilier.refm_btp_poste (lot_id, code, libelle)
+INSERT INTO immobilier.refm_btp_poste (id, lot_id, code, libelle)
+SELECT nextval('immobilier.seq_refm_btp_poste'), x.* FROM (
 SELECT id, 'ETUDES_INST', 'Études et Installation de Chantier' FROM immobilier.refm_btp_lot WHERE code = 'GO'
 UNION ALL SELECT id, 'INFRA_TERR',  'Infrastructure - A) Terrassement' FROM immobilier.refm_btp_lot WHERE code = 'GO'
 UNION ALL SELECT id, 'INFRA_FOND',  'Infrastructure - B) Fondation' FROM immobilier.refm_btp_lot WHERE code = 'GO'
@@ -28,25 +29,28 @@ UNION ALL SELECT id, 'MENUISERIE',  'Menuiserie Bois - Menuiserie Aluminium' FRO
 UNION ALL SELECT id, 'PEINTURE',    'Peinture' FROM immobilier.refm_btp_lot WHERE code = 'SO'
 UNION ALL SELECT id, 'PARKING',     'Dallage parking' FROM immobilier.refm_btp_lot WHERE code = 'VRD'
 UNION ALL SELECT id, 'CLOTURE',     'Clôture' FROM immobilier.refm_btp_lot WHERE code = 'VRD'
-UNION ALL SELECT id, 'JARDINAGE',   'Jardinage' FROM immobilier.refm_btp_lot WHERE code = 'VRD';
+UNION ALL SELECT id, 'JARDINAGE',   'Jardinage' FROM immobilier.refm_btp_lot WHERE code = 'VRD') x(lot_id, code, libelle);
 
-INSERT INTO immobilier.refm_btp_tache (poste_id, code, libelle, unite_defaut)
+INSERT INTO immobilier.refm_btp_tache (id, poste_id, code, libelle, unite_defaut)
+SELECT nextval('immobilier.seq_refm_btp_tache'), x.* FROM (
 SELECT id, 'TERRASSEMENT',  'Terrassement', 'm3' FROM immobilier.refm_btp_poste WHERE code = 'INFRA_TERR'
 UNION ALL SELECT id, 'FONDATION',     'Fondation', 'ens' FROM immobilier.refm_btp_poste WHERE code = 'INFRA_FOND'
 UNION ALL SELECT id, 'CARRELAGE_SOL', 'Carrelage au sol', 'm2' FROM immobilier.refm_btp_poste WHERE code = 'REVETEMENTS'
 UNION ALL SELECT id, 'CARRELAGE_MUR', 'Carreaux au mur', 'm2' FROM immobilier.refm_btp_poste WHERE code = 'REVETEMENTS'
 UNION ALL SELECT id, 'INST_EAU',      'Installation eau', 'ml' FROM immobilier.refm_btp_poste WHERE code = 'PLOMBERIE'
-UNION ALL SELECT id, 'RES_EVAC',      'Réseaux d''évacuation', 'ml' FROM immobilier.refm_btp_poste WHERE code = 'PLOMBERIE';
+UNION ALL SELECT id, 'RES_EVAC',      'Réseaux d''évacuation', 'ml' FROM immobilier.refm_btp_poste WHERE code = 'PLOMBERIE') x(poste_id, code, libelle, unite_defaut);
 
-INSERT INTO immobilier.refm_btp_sous_tache (tache_id, code, libelle, unite_defaut)
+INSERT INTO immobilier.refm_btp_sous_tache (id, tache_id, code, libelle, unite_defaut)
+SELECT nextval('immobilier.seq_refm_btp_sous_tache'), x.* FROM (
 SELECT id, 'CHAPE_CIMENT', 'Chape ciment', 'm2' FROM immobilier.refm_btp_tache WHERE code = 'CARRELAGE_SOL'
-UNION ALL SELECT id, 'GRES_CERAME',  'Carreaux grès cérame 60x60', 'm2' FROM immobilier.refm_btp_tache WHERE code = 'CARRELAGE_SOL';
+UNION ALL SELECT id, 'GRES_CERAME',  'Carreaux grès cérame 60x60', 'm2' FROM immobilier.refm_btp_tache WHERE code = 'CARRELAGE_SOL') x(tache_id, code, libelle, unite_defaut);
 
 --changeset syao:2026-11-21-btp-11-data-projet-devis context:btp-init labels:btp-init
 INSERT INTO immobilier.btp_projet (
-    code_projet, nom_projet, client_nom, localisation,
+    id, code_projet, nom_projet, client_nom, localisation,
     date_debut, date_fin_prevue, budget_prevu_ht, budget_prevu_ttc, devise, statut
 ) VALUES (
+    nextval('immobilier.seq_btp_projet'),
     'PRJ-BING-2026-02',
     'Construction Villa Triplex 6 Pièces (Triplex N°2)',
     'Monsieur YAO KONAN SIMEON',
@@ -60,10 +64,11 @@ INSERT INTO immobilier.btp_projet (
 );
 
 INSERT INTO immobilier.btp_devis (
-    projet_id, numero_devis, date_devis,
+    id, projet_id, numero_devis, date_devis,
     montant_ht, taux_tva, montant_ttc, statut, notes
 )
 SELECT
+    nextval('immobilier.seq_btp_devis'),
     id,
     'YKSBat0201-07102026',
     DATE '2026-10-07',
@@ -77,10 +82,11 @@ WHERE code_projet = 'PRJ-BING-2026-02';
 
 --changeset syao:2026-11-21-btp-12-data-lignes-devis context:btp-init labels:btp-init
 INSERT INTO immobilier.btp_ligne_devis (
-    devis_id, lot_id, poste_id, tache_id, sous_tache_id,
+    id, devis_id, lot_id, poste_id, tache_id, sous_tache_id,
     ordre_affichage, designation, unite, quantite, prix_unitaire_ht, montant_ht
 )
 SELECT
+    nextval('immobilier.seq_btp_ligne_devis'),
     d.id,
     l.id,
     p.id,
@@ -291,16 +297,17 @@ WHERE d.numero_devis = 'YKSBat0201-07102026';
 
 --changeset syao:2026-11-21-btp-13-data-situation-facture context:btp-init labels:btp-init
 INSERT INTO immobilier.btp_situation_travaux (
-    projet_id, numero_situation, date_situation, periode_debut, periode_fin, statut
+    id, projet_id, numero_situation, date_situation, periode_debut, periode_fin, statut
 )
 SELECT
-    id, 'SIT-01', DATE '2026-11-15', DATE '2026-10-15', DATE '2026-11-15', 'VALIDEE'
+    nextval('immobilier.seq_btp_situation_travaux'), id, 'SIT-01', DATE '2026-11-15', DATE '2026-10-15', DATE '2026-11-15', 'VALIDEE'
 FROM immobilier.btp_projet WHERE code_projet = 'PRJ-BING-2026-02';
 
 INSERT INTO immobilier.btp_situation_ligne (
-    situation_id, ligne_devis_id, quantite_precedente, quantite_periode, quantite_cumulee, montant_periode_ht
+    id, situation_id, ligne_devis_id, quantite_precedente, quantite_periode, quantite_cumulee, montant_periode_ht
 )
 SELECT
+    nextval('immobilier.seq_btp_situation_ligne'),
     s.id,
     ld.id,
     0.000,
@@ -332,10 +339,11 @@ WHERE t.situation_id = s.id
   AND p.code_projet = 'PRJ-BING-2026-02';
 
 INSERT INTO immobilier.btp_facture (
-    projet_id, situation_id, numero_facture, type_facture,
+    id, projet_id, situation_id, numero_facture, type_facture,
     date_emission, date_echeance, montant_ht, taux_tva, montant_ttc, statut
 )
 SELECT
+    nextval('immobilier.seq_btp_facture'),
     p.id,
     s.id,
     'FAC-2026-001',
@@ -351,8 +359,8 @@ JOIN immobilier.btp_situation_travaux s ON s.projet_id = p.id AND s.numero_situa
 WHERE p.code_projet = 'PRJ-BING-2026-02';
 
 INSERT INTO immobilier.btp_paiement (
-    facture_id, date_paiement, montant, mode_paiement, reference_transaction, commentaire
+    id, facture_id, date_paiement, montant, mode_paiement, reference_transaction, commentaire
 )
 SELECT
-    id, TIMESTAMPTZ '2026-11-18 00:00:00+00', 3500000.00, 'VIREMENT', 'VIR-ECOBANK-20261118-01', 'Premier versement client'
+    nextval('immobilier.seq_btp_paiement'), id, TIMESTAMPTZ '2026-11-18 00:00:00+00', 3500000.00, 'VIREMENT', 'VIR-ECOBANK-20261118-01', 'Premier versement client'
 FROM immobilier.btp_facture WHERE numero_facture = 'FAC-2026-001';

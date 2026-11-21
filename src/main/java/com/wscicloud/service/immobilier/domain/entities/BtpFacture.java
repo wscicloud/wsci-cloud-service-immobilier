@@ -22,7 +22,12 @@ public class BtpFacture implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "gen_btp_facture",
+            sequenceName = "immobilier.seq_btp_facture",
+            initialValue = 1,
+            allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gen_btp_facture")
     private Long id;
 
     @Column(name = "projet_id", nullable = false)

@@ -19,7 +19,12 @@ public class RefmBtpPoste implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "gen_refm_btp_poste",
+            sequenceName = "immobilier.seq_refm_btp_poste",
+            initialValue = 1,
+            allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gen_refm_btp_poste")
     private Long id;
 
     @Column(name = "lot_id", nullable = false)

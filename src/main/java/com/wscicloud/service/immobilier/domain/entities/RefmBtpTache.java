@@ -19,7 +19,12 @@ public class RefmBtpTache implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "gen_refm_btp_tache",
+            sequenceName = "immobilier.seq_refm_btp_tache",
+            initialValue = 1,
+            allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gen_refm_btp_tache")
     private Long id;
 
     @Column(name = "poste_id", nullable = false)

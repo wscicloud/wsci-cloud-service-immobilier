@@ -6,16 +6,30 @@
 DROP SCHEMA IF EXISTS immobilier CASCADE;
 CREATE SCHEMA immobilier;
 
+--changeset syao:2026-11-21-btp-00b-sequences context:btp-init labels:btp-init
+CREATE SEQUENCE immobilier.seq_refm_btp_lot INCREMENT 1 START 1 MINVALUE 1;
+CREATE SEQUENCE immobilier.seq_refm_btp_poste INCREMENT 1 START 1 MINVALUE 1;
+CREATE SEQUENCE immobilier.seq_refm_btp_tache INCREMENT 1 START 1 MINVALUE 1;
+CREATE SEQUENCE immobilier.seq_refm_btp_sous_tache INCREMENT 1 START 1 MINVALUE 1;
+CREATE SEQUENCE immobilier.seq_btp_projet INCREMENT 1 START 1 MINVALUE 1;
+CREATE SEQUENCE immobilier.seq_btp_devis INCREMENT 1 START 1 MINVALUE 1;
+CREATE SEQUENCE immobilier.seq_btp_ligne_devis INCREMENT 1 START 1 MINVALUE 1;
+CREATE SEQUENCE immobilier.seq_btp_situation_travaux INCREMENT 1 START 1 MINVALUE 1;
+CREATE SEQUENCE immobilier.seq_btp_situation_ligne INCREMENT 1 START 1 MINVALUE 1;
+CREATE SEQUENCE immobilier.seq_btp_facture INCREMENT 1 START 1 MINVALUE 1;
+CREATE SEQUENCE immobilier.seq_btp_facture_ligne INCREMENT 1 START 1 MINVALUE 1;
+CREATE SEQUENCE immobilier.seq_btp_paiement INCREMENT 1 START 1 MINVALUE 1;
+
 --changeset syao:2026-11-21-btp-01-referentiel context:btp-init labels:btp-init
 CREATE TABLE immobilier.refm_btp_lot (
-    id          BIGSERIAL PRIMARY KEY,
+    id          BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_refm_btp_lot'),
     code        VARCHAR(20)  NOT NULL UNIQUE,
     libelle     VARCHAR(150) NOT NULL,
     description TEXT
 );
 
 CREATE TABLE immobilier.refm_btp_poste (
-    id          BIGSERIAL PRIMARY KEY,
+    id          BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_refm_btp_poste'),
     lot_id      BIGINT       NOT NULL REFERENCES immobilier.refm_btp_lot(id) ON DELETE CASCADE,
     code        VARCHAR(40)  NOT NULL,
     libelle     VARCHAR(180) NOT NULL,
@@ -24,7 +38,7 @@ CREATE TABLE immobilier.refm_btp_poste (
 );
 
 CREATE TABLE immobilier.refm_btp_tache (
-    id           BIGSERIAL PRIMARY KEY,
+    id           BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_refm_btp_tache'),
     poste_id     BIGINT       NOT NULL REFERENCES immobilier.refm_btp_poste(id) ON DELETE CASCADE,
     code         VARCHAR(50)  NOT NULL,
     libelle      VARCHAR(220) NOT NULL,
@@ -33,7 +47,7 @@ CREATE TABLE immobilier.refm_btp_tache (
 );
 
 CREATE TABLE immobilier.refm_btp_sous_tache (
-    id           BIGSERIAL PRIMARY KEY,
+    id           BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_refm_btp_sous_tache'),
     tache_id     BIGINT       NOT NULL REFERENCES immobilier.refm_btp_tache(id) ON DELETE CASCADE,
     code         VARCHAR(60)  NOT NULL,
     libelle      VARCHAR(255) NOT NULL,
@@ -43,7 +57,7 @@ CREATE TABLE immobilier.refm_btp_sous_tache (
 
 --changeset syao:2026-11-21-btp-02-projet-devis context:btp-init labels:btp-init
 CREATE TABLE immobilier.btp_projet (
-    id               BIGSERIAL PRIMARY KEY,
+    id               BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_btp_projet'),
     code_projet      VARCHAR(50)    NOT NULL UNIQUE,
     nom_projet       VARCHAR(220)   NOT NULL,
     client_nom       VARCHAR(200)   NOT NULL,
@@ -63,7 +77,7 @@ CREATE TABLE immobilier.btp_projet (
 );
 
 CREATE TABLE immobilier.btp_devis (
-    id           BIGSERIAL PRIMARY KEY,
+    id           BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_btp_devis'),
     projet_id    BIGINT         NOT NULL REFERENCES immobilier.btp_projet(id) ON DELETE CASCADE,
     numero_devis VARCHAR(60)    NOT NULL UNIQUE,
     date_devis   DATE           NOT NULL DEFAULT CURRENT_DATE,
@@ -76,7 +90,7 @@ CREATE TABLE immobilier.btp_devis (
 );
 
 CREATE TABLE immobilier.btp_ligne_devis (
-    id               BIGSERIAL PRIMARY KEY,
+    id               BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_btp_ligne_devis'),
     devis_id         BIGINT         NOT NULL REFERENCES immobilier.btp_devis(id) ON DELETE CASCADE,
     lot_id           BIGINT         REFERENCES immobilier.refm_btp_lot(id) ON DELETE SET NULL,
     poste_id         BIGINT         REFERENCES immobilier.refm_btp_poste(id) ON DELETE SET NULL,
@@ -93,7 +107,7 @@ CREATE TABLE immobilier.btp_ligne_devis (
 
 --changeset syao:2026-11-21-btp-03-situation context:btp-init labels:btp-init
 CREATE TABLE immobilier.btp_situation_travaux (
-    id                  BIGSERIAL PRIMARY KEY,
+    id                  BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_btp_situation_travaux'),
     projet_id           BIGINT         NOT NULL REFERENCES immobilier.btp_projet(id) ON DELETE CASCADE,
     numero_situation    VARCHAR(50)    NOT NULL,
     date_situation      DATE           NOT NULL DEFAULT CURRENT_DATE,
@@ -109,7 +123,7 @@ CREATE TABLE immobilier.btp_situation_travaux (
 );
 
 CREATE TABLE immobilier.btp_situation_ligne (
-    id                  BIGSERIAL PRIMARY KEY,
+    id                  BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_btp_situation_ligne'),
     situation_id        BIGINT         NOT NULL REFERENCES immobilier.btp_situation_travaux(id) ON DELETE CASCADE,
     ligne_devis_id      BIGINT         NOT NULL REFERENCES immobilier.btp_ligne_devis(id) ON DELETE RESTRICT,
     quantite_precedente NUMERIC(12, 3) NOT NULL DEFAULT 0,
@@ -122,7 +136,7 @@ CREATE TABLE immobilier.btp_situation_ligne (
 
 --changeset syao:2026-11-21-btp-04-facturation context:btp-init labels:btp-init
 CREATE TABLE immobilier.btp_facture (
-    id             BIGSERIAL PRIMARY KEY,
+    id             BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_btp_facture'),
     projet_id      BIGINT         NOT NULL REFERENCES immobilier.btp_projet(id) ON DELETE CASCADE,
     situation_id   BIGINT         REFERENCES immobilier.btp_situation_travaux(id) ON DELETE SET NULL,
     numero_facture VARCHAR(60)    NOT NULL UNIQUE,
@@ -137,7 +151,7 @@ CREATE TABLE immobilier.btp_facture (
 );
 
 CREATE TABLE immobilier.btp_facture_ligne (
-    id                 BIGSERIAL PRIMARY KEY,
+    id                 BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_btp_facture_ligne'),
     facture_id         BIGINT         NOT NULL REFERENCES immobilier.btp_facture(id) ON DELETE CASCADE,
     ligne_devis_id     BIGINT         REFERENCES immobilier.btp_ligne_devis(id) ON DELETE SET NULL,
     situation_ligne_id BIGINT         REFERENCES immobilier.btp_situation_ligne(id) ON DELETE SET NULL,
@@ -150,7 +164,7 @@ CREATE TABLE immobilier.btp_facture_ligne (
 );
 
 CREATE TABLE immobilier.btp_paiement (
-    id                    BIGSERIAL PRIMARY KEY,
+    id                    BIGINT PRIMARY KEY DEFAULT nextval('immobilier.seq_btp_paiement'),
     facture_id            BIGINT         NOT NULL REFERENCES immobilier.btp_facture(id) ON DELETE RESTRICT,
     date_paiement         TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
     montant               NUMERIC(15, 2) NOT NULL DEFAULT 0,
