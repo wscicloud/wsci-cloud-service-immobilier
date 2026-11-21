@@ -1,0 +1,11 @@
+﻿target/
+*.log
+logs/
+.git/
+.gitignore
+.mvn/wrapper/maven-wrapper.jar
+**/.DS_Store
+**/LOG_PATH_IS_UNDEFINED/
+*.iml
+.idea/
+

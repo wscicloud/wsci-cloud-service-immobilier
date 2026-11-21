@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<property name="LOG_FILE_MAX_SIZE" value="100MB" />
+	<property name="LOG_FILE_MAX_HISTORY" value="5" />
+	<property name="LOG_FILE" value="${LOG_PATH}/${SERVICE_NAME}.log}" />
+	
+	<!-- 
+	<include resource="org/springframework/boot/logging/logback/base.xml" /> 
+	<include resource="org/springframework/boot/logging/logback/defaults.xml" /> 
+	-->
+	
+	<property name="CONSOLE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} | biana | %5(${PID:- }) | %-30.30thread | %-60.60(%logger{39}.%M:%line) | %5p | %msg%rEx{full}%n" />
+	<property name="CONSOLE_LOG_CHARSET" value="${CONSOLE_LOG_CHARSET:-${file.encoding:-UTF-8}}"/>
+	<property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} | biana | %5(${PID:- }) | %-30.30thread | %-60.60(%logger{39}.%M:%line) | %5p | %msg%rEx{full}%n" />
+	<property name="FILE_LOG_CHARSET" value="${FILE_LOG_CHARSET:-${file.encoding:-UTF-8}}"/>
+	
+	<include resource="org/springframework/boot/logging/logback/file-appender.xml" />
+	<include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+
+	<springProfile name="local">
+		<root level="INFO">
+			<appender-ref ref="CONSOLE"/>
+		</root>
+	</springProfile>
+	
+	<springProfile name="saas">
+		<root level="INFO">
+			<appender-ref ref="FILE" />
+		</root>
+	</springProfile>
+	
+</configuration>

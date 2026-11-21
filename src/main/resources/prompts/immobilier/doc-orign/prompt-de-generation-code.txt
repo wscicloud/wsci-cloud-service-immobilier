@@ -1,0 +1,155 @@
+Entant que developpeur, je souhaite que le code de génération de devis pour le projet immobilier "IMMEUBLE R+5 AMOKA"
+soit automatiquement généré à partir des données initiales injectées dans la base de données.
+Cela inclut les lots de devis, les postes clés, les lignes du devis type AMOKA, la bibliothèque des prix de référence
+et les sous-traitants par défaut. Le code doit être structuré de manière à faciliter la maintenance et l'extension future,
+en utilisant des modèles et des mappers appropriés pour transformer les entités en DTOs et vice versa.
+
+wsci-cloud-service-cashier
+Créer un module dans le projet et l'appeler "immobilier"
+Ce module doit inclure :
+la génération de devis (creation de devis, ajout de lignes, ajout de sous-lignes, calcul des montants, dupliquer un devis, gestion versionning)
+la generation de factures (creation de factures, ajout de lignes, calcul des montants, suivi des paiements multiple)
+la gestion des dépenses réelles
+la gestion des situations de travaux
+la gestion des tâches de planning
+la gestion des sous-traitants et de leurs contrats
+la gestion des bibliothèques de taches et prix de travaux BTP
+
+permettre la generation du devis joints
+
+CREATE TABLE btp_projet (
+    id SERIAL PRIMARY KEY,
+    societe_id INT REFERENCES sys_societe(id) ON DELETE SET NULL,
+    nom VARCHAR(255) NOT NULL,
+    numero_operation VARCHAR(100),
+    type_ouvrage VARCHAR(150),
+    adresse_chantier TEXT,
+    ville_pays VARCHAR(150),
+    date_etablissement DATE,
+    client VARCHAR(255),
+    mo_adresse TEXT,
+    mo_tel_email VARCHAR(255),
+    maitre_oeuvre VARCHAR(255),
+    bet VARCHAR(255),
+    bureau_controle VARCHAR(255),
+    entreprise_mandataire VARCHAR(255),
+    date_debut DATE,
+    duree_mois INT DEFAULT 12,
+
+    -- Objectifs Financiers et Paramètres
+    marge_nette_objectif NUMERIC(5,4) DEFAULT 0.0800,
+    delai_realisation_cible_mois INT DEFAULT 12,
+    taux_avancement_seuil_alerte NUMERIC(5,4) DEFAULT 0.8500,
+    marge_brute_min_acceptable NUMERIC(5,4) DEFAULT 0.0500,
+    avance_taux NUMERIC(5,4) DEFAULT 0.0400,
+    delai_paiement_jours INT DEFAULT 30,
+    sav_taux NUMERIC(5,4) DEFAULT 0.0314,
+    taux_aleas NUMERIC(5,4) DEFAULT 0.0260,
+    tva_taux NUMERIC(5,4) DEFAULT 0.1800,
+    retenue_garantie_taux NUMERIC(5,4) DEFAULT 0.0500,
+    frais_generaux_taux NUMERIC(5,4) DEFAULT 0.0444,
+    marge_taux NUMERIC(5,4) DEFAULT 0.0800,
+
+    devis_num VARCHAR(100),
+    devis_date DATE,
+    devis_titre TEXT DEFAULT 'DEVIS QUANTITATIF ET ESTIMATIF DES TRAVAUX',
+    devis_afficher_tva BOOLEAN DEFAULT FALSE,
+    devis_exoneration_tva BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE btp_devis_global (
+    id SERIAL PRIMARY KEY,
+    projet_id INT NOT NULL REFERENCES btp_projet(id) ON DELETE CASCADE,
+    type_id INT NOT NULL, -- ex: GO, SO, VRD
+    type_code VARCHAR(255) NOT NULL, -- ex: GO, SO, VRD
+    type_libelle VARCHAR(255) NOT NULL,
+    ordre INT DEFAULT 0
+);
+
+CREATE TABLE btp_devis_specifique (
+    id SERIAL PRIMARY KEY,
+    devis_global_id INT NOT NULL REFERENCES btp_devis_global(id) ON DELETE CASCADE,
+    poste_id INT NOT NULL,
+    poste_code VARCHAR(255) NOT NULL,
+    poste_libelle VARCHAR(255) NOT NULL,
+    ordre INT DEFAULT 0
+);
+
+CREATE TABLE btp_ligne_devis (
+    id SERIAL PRIMARY KEY,
+    devis_specifique_id INT NOT NULL REFERENCES btp_devis_specifique(id) ON DELETE CASCADE,
+    sous_ensemble VARCHAR(255),
+    designation TEXT NOT NULL,
+    unite VARCHAR(20) NOT NULL,
+    quantite NUMERIC(15,3) NOT NULL DEFAULT 0.000,
+    prix_unitaire NUMERIC(15,2) NOT NULL DEFAULT 0.00,
+    montant_ht NUMERIC(15,2) NOT NULL DEFAULT 0.00,
+    niveau VARCHAR(100) DEFAULT 'Tous niveaux',
+    ordre INT DEFAULT 0
+);
+
+CREATE TABLE btp_sous_detail_prix (
+    id SERIAL PRIMARY KEY,
+    ligne_id INT UNIQUE NOT NULL REFERENCES btp_ligne_devis(id) ON DELETE CASCADE,
+    code_ouvrage VARCHAR(50),
+    debours_sec_unitaire NUMERIC(15,2) DEFAULT 0.00,
+    cout_materiaux NUMERIC(15,2) DEFAULT 0.00,
+    cout_materiel NUMERIC(15,2) DEFAULT 0.00,
+    cout_main_oeuvre NUMERIC(15,2) DEFAULT 0.00,
+    frais_generaux NUMERIC(15,2) DEFAULT 0.00,
+    marge NUMERIC(15,2) DEFAULT 0.00,
+    prix_vente_calcule NUMERIC(15,2) DEFAULT 0.00
+);
+
+CREATE TABLE btp_situation_travaux (
+    id SERIAL PRIMARY KEY,
+    projet_id INT NOT NULL REFERENCES btp_projet(id) ON DELETE CASCADE,
+    mois INT NOT NULL,
+    annee INT NOT NULL,
+    date_situation DATE NOT NULL,
+    montant_cumule_ht NUMERIC(15,2) DEFAULT 0.00,
+    montant_periode_ht NUMERIC(15,2) DEFAULT 0.00,
+    avancement_global_pct NUMERIC(5,4) DEFAULT 0.0000,
+    statut VARCHAR(50) NULL
+);
+
+CREATE TABLE btp_tache_planning (
+    id SERIAL PRIMARY KEY,
+    projet_id INT NOT NULL REFERENCES btp_projet(id) ON DELETE CASCADE,
+    code_tache VARCHAR(50),
+    nom_tache VARCHAR(255) NOT NULL,
+    lot VARCHAR(100),
+    date_debut DATE NOT NULL,
+    duree_jours INT NOT NULL DEFAULT 1,
+    date_fin DATE NOT NULL,
+    avancement_pct NUMERIC(5,4) DEFAULT 0.0000,
+    predecesseurs JSONB DEFAULT '[]'::jsonb
+);
+
+CREATE TABLE btp_rapport_journalier (
+    id SERIAL PRIMARY KEY,
+    projet_id INT NOT NULL REFERENCES btp_projet(id) ON DELETE CASCADE,
+    date_rapport DATE NOT NULL,
+    effectif_presence INT DEFAULT 0,
+    meteo VARCHAR(100),
+    avancement_synthese TEXT,
+    incidents_remarques TEXT,
+    redacteur VARCHAR(150),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE refm_btp_tache_biblio (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    tache VARCHAR(255) NOT NULL,
+    lot VARCHAR(100),
+    categorie VARCHAR(100),
+    unite VARCHAR(20),
+    rendement NUMERIC(10,2),
+    chef INT DEFAULT 0,
+    compagnon INT DEFAULT 0,
+    manoeuvres INT DEFAULT 0,
+    specialiste INT DEFAULT 0,
+    couleur_hex VARCHAR(10) DEFAULT '3B82F6'
+);

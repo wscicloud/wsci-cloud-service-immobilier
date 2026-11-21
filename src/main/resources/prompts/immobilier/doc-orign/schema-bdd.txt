@@ -1,0 +1,207 @@
+-- ============================================================================
+-- BASE DE DONNÉES AMOKA — GESTION DE PROJET BTP
+-- SCRIPT DE CRÉATION DE LA STRUCTURE (POSTGRESQL)
+-- ============================================================================
+
+CREATE SCHEMA IF NOT EXISTS amoka;
+SET search_path TO amoka, public;
+
+-- ----------------------------------------------------------------------------
+-- 1. PROJET ET CONFIGURATION ENTREPRISE
+-- ----------------------------------------------------------------------------
+CREATE TABLE entreprise (
+    id_entreprise SERIAL PRIMARY KEY,
+    nom VARCHAR(255) NOT NULL,
+    activites TEXT,
+    accroche TEXT,
+    pays VARCHAR(100) DEFAULT 'CÔTE D''IVOIRE',
+    adresse_fiscale TEXT,
+    telephone VARCHAR(50),
+    rc VARCHAR(100),
+    cc VARCHAR(100),
+    banque VARCHAR(150),
+    compte_bancaire VARCHAR(100),
+    email VARCHAR(150),
+    logo_data TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE projet (
+    id_projet SERIAL PRIMARY KEY,
+    id_entreprise INT REFERENCES entreprise(id_entreprise) ON DELETE SET NULL,
+    nom VARCHAR(255) NOT NULL,
+    numero_operation VARCHAR(100),
+    type_ouvrage VARCHAR(150),
+    adresse_chantier TEXT,
+    ville_pays VARCHAR(150),
+    date_etablissement DATE,
+    client VARCHAR(255),
+    mo_adresse TEXT,
+    mo_tel_email VARCHAR(255),
+    maitre_oeuvre VARCHAR(255),
+    bet VARCHAR(255),
+    bureau_controle VARCHAR(255),
+    entreprise_mandataire VARCHAR(255),
+    date_debut DATE,
+    duree_mois INT DEFAULT 12,
+
+    -- Objectifs Financiers et Paramètres
+    marge_nette_objectif NUMERIC(5,4) DEFAULT 0.0800,
+    delai_realisation_cible_mois INT DEFAULT 12,
+    taux_avancement_seuil_alerte NUMERIC(5,4) DEFAULT 0.8500,
+    marge_brute_min_acceptable NUMERIC(5,4) DEFAULT 0.0500,
+    avance_taux NUMERIC(5,4) DEFAULT 0.0400,
+    delai_paiement_jours INT DEFAULT 30,
+    sav_taux NUMERIC(5,4) DEFAULT 0.0314,
+    taux_aleas NUMERIC(5,4) DEFAULT 0.0260,
+    tva_taux NUMERIC(5,4) DEFAULT 0.1800,
+    retenue_garantie_taux NUMERIC(5,4) DEFAULT 0.0500,
+    frais_generaux_taux NUMERIC(5,4) DEFAULT 0.0444,
+    marge_taux NUMERIC(5,4) DEFAULT 0.0800,
+
+    devis_num VARCHAR(100),
+    devis_date DATE,
+    devis_titre TEXT DEFAULT 'DEVIS QUANTITATIF ET ESTIMATIF DES TRAVAUX',
+    devis_afficher_tva BOOLEAN DEFAULT FALSE,
+    devis_exoneration_tva BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ----------------------------------------------------------------------------
+-- 2. STRUCTURE DU DEVIS ET BIBLIOTHÈQUE DES OUVRAGES
+-- ----------------------------------------------------------------------------
+CREATE TABLE lot_devis (
+    id_lot SERIAL PRIMARY KEY,
+    id_projet INT NOT NULL REFERENCES projet(id_projet) ON DELETE CASCADE,
+    code_lot VARCHAR(50) NOT NULL, -- ex: GO, SO, VRD
+    nom_lot VARCHAR(255) NOT NULL,
+    ordre INT DEFAULT 0
+);
+
+CREATE TABLE poste_devis (
+    id_poste SERIAL PRIMARY KEY,
+    id_lot INT NOT NULL REFERENCES lot_devis(id_lot) ON DELETE CASCADE,
+    nom_poste VARCHAR(255) NOT NULL,
+    ordre INT DEFAULT 0
+);
+
+CREATE TABLE ligne_devis (
+    id_ligne SERIAL PRIMARY KEY,
+    id_poste INT NOT NULL REFERENCES poste_devis(id_poste) ON DELETE CASCADE,
+    sous_ensemble VARCHAR(255),
+    designation TEXT NOT NULL,
+    unite VARCHAR(20) NOT NULL,
+    quantite NUMERIC(15,3) NOT NULL DEFAULT 0.000,
+    prix_unitaire NUMERIC(15,2) NOT NULL DEFAULT 0.00,
+    montant_ht NUMERIC(15,2) GENERATED ALWAYS AS (quantite * prix_unitaire) STORED,
+    niveau VARCHAR(100) DEFAULT 'Tous niveaux',
+    ordre INT DEFAULT 0
+);
+
+CREATE TABLE sous_detail_prix (
+    id_sous_detail SERIAL PRIMARY KEY,
+    id_ligne INT UNIQUE NOT NULL REFERENCES ligne_devis(id_ligne) ON DELETE CASCADE,
+    code_ouvrage VARCHAR(50),
+    debours_sec_unitaire NUMERIC(15,2) DEFAULT 0.00,
+    cout_materiaux NUMERIC(15,2) DEFAULT 0.00,
+    cout_materiel NUMERIC(15,2) DEFAULT 0.00,
+    cout_main_oeuvre NUMERIC(15,2) DEFAULT 0.00,
+    frais_generaux NUMERIC(15,2) DEFAULT 0.00,
+    marge NUMERIC(15,2) DEFAULT 0.00,
+    prix_vente_calcule NUMERIC(15,2) DEFAULT 0.00
+);
+
+-- ----------------------------------------------------------------------------
+-- 3. SOUS-TRAITANCE ET SUIVI DES DÉPENSES
+-- ----------------------------------------------------------------------------
+CREATE TABLE soustraitant (
+    id_st SERIAL PRIMARY KEY,
+    id_projet INT NOT NULL REFERENCES projet(id_projet) ON DELETE CASCADE,
+    nom VARCHAR(255) NOT NULL,
+    metier VARCHAR(150),
+    lot VARCHAR(50),
+    marche_montant NUMERIC(15,2) NOT NULL DEFAULT 0.00,
+    avancement_pct NUMERIC(5,4) DEFAULT 0.0000,
+    retenue_garantie_pct NUMERIC(5,4) DEFAULT 0.0500,
+    nature_contrat VARCHAR(100) DEFAULT 'Main d''œuvre uniquement',
+    fournitures_entreprise NUMERIC(15,2) DEFAULT 0.00,
+    taux_risque NUMERIC(5,4) DEFAULT 0.0200,
+    taux_sav NUMERIC(5,4) DEFAULT 0.0100
+);
+
+CREATE TABLE depense_reelle (
+    id_depense SERIAL PRIMARY KEY,
+    id_projet INT NOT NULL REFERENCES projet(id_projet) ON DELETE CASCADE,
+    date_depense DATE NOT NULL,
+    categorie VARCHAR(100) NOT NULL, -- ex: Déboursés secs, Frais Généraux
+    nature VARCHAR(150) NOT NULL, -- ex: Matériaux GO, Encadrement
+    fournisseur_beneficiaire VARCHAR(255),
+    designation TEXT NOT NULL,
+    montant_ht NUMERIC(15,2) NOT NULL DEFAULT 0.00,
+    tva NUMERIC(15,2) DEFAULT 0.00,
+    montant_ttc NUMERIC(15,2) GENERATED ALWAYS AS (montant_ht + tva) STORED,
+    mode_paiement VARCHAR(50),
+    id_st INT REFERENCES soustraitant(id_st) ON DELETE SET NULL,
+    id_ligne_devis INT REFERENCES ligne_devis(id_ligne) ON DELETE SET NULL
+);
+
+CREATE TABLE situation_travaux (
+    id_situation SERIAL PRIMARY KEY,
+    id_projet INT NOT NULL REFERENCES projet(id_projet) ON DELETE CASCADE,
+    mois INT NOT NULL,
+    annee INT NOT NULL,
+    date_situation DATE NOT NULL,
+    montant_cumule_ht NUMERIC(15,2) DEFAULT 0.00,
+    montant_periode_ht NUMERIC(15,2) DEFAULT 0.00,
+    avancement_global_pct NUMERIC(5,4) DEFAULT 0.0000,
+    statut VARCHAR(50) DEFAULT 'Brouillon'
+);
+
+-- ----------------------------------------------------------------------------
+-- 4. PLANNING ET RESSOURCES
+-- ----------------------------------------------------------------------------
+CREATE TABLE tache_btp_biblio (
+    id_tache_biblio SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    tache VARCHAR(255) NOT NULL,
+    lot VARCHAR(100),
+    categorie VARCHAR(100),
+    unite VARCHAR(20),
+    rendement NUMERIC(10,2),
+    chef INT DEFAULT 0,
+    compagnon INT DEFAULT 0,
+    manoeuvres INT DEFAULT 0,
+    specialiste INT DEFAULT 0,
+    couleur_hex VARCHAR(10) DEFAULT '3B82F6'
+);
+
+CREATE TABLE tache_planning (
+    id_tache SERIAL PRIMARY KEY,
+    id_projet INT NOT NULL REFERENCES projet(id_projet) ON DELETE CASCADE,
+    code_tache VARCHAR(50),
+    nom_tache VARCHAR(255) NOT NULL,
+    lot VARCHAR(100),
+    date_debut DATE NOT NULL,
+    duree_jours INT NOT NULL DEFAULT 1,
+    date_fin DATE NOT NULL,
+    avancement_pct NUMERIC(5,4) DEFAULT 0.0000,
+    predecesseurs JSONB DEFAULT '[]'::jsonb
+);
+
+CREATE TABLE rapport_journalier (
+    id_rapport SERIAL PRIMARY KEY,
+    id_projet INT NOT NULL REFERENCES projet(id_projet) ON DELETE CASCADE,
+    date_rapport DATE NOT NULL,
+    effectif_presence INT DEFAULT 0,
+    meteo VARCHAR(100),
+    avancement_synthese TEXT,
+    incidents_remarques TEXT,
+    redacteur VARCHAR(150),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index pour optimiser les requêtes fréquentes
+CREATE INDEX idx_ligne_devis_poste ON ligne_devis(id_poste);
+CREATE INDEX idx_depense_projet_date ON depense_reelle(id_projet, date_depense);
+CREATE INDEX idx_tache_planning_projet ON tache_planning(id_projet);
+CREATE INDEX idx_situation_projet ON situation_travaux(id_projet, annee, mois);

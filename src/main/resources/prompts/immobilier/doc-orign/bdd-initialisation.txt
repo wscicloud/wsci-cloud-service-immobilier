@@ -1,0 +1,73 @@
+-- ============================================================================
+-- SCRIPT D'INITIALISATION ET D'INJECTION DES DONNÉES DE RÉFÉRENCE
+-- ============================================================================
+
+SET search_path TO amoka, public;
+
+-- 1. Insertion de l'entreprise et du projet R+5 AMOKA
+INSERT INTO entreprise (id_entreprise, nom, activites, pays)
+VALUES (1, 'AMOKA BTP', 'ENTREPRISE DE BÂTIMENT ET TRAVAUX PUBLICS', 'REPUBLIQUE DE COTE D''IVOIRE');
+
+INSERT INTO projet (
+    id_projet, id_entreprise, nom, numero_operation, type_ouvrage, adresse_chantier,
+    ville_pays, date_etablissement, client, date_debut, duree_mois, devis_num, devis_date
+) VALUES (
+    1, 1, 'IMMEUBLE R+5 AMOKA', 'IAR5 02-02022025', 'Bâtiment R+5 - Logements',
+    'BINGERVILLE - ANA GBONTCHUI', 'Abidjan - Côte d''Ivoire', '2026-06-14',
+    'PRIVE', '2025-09-08', 24, 'IAR5 02-02022025', '2026-06-14'
+);
+
+-- 2. Initialisation des Lots de Devis
+INSERT INTO lot_devis (id_lot, id_projet, code_lot, nom_lot, ordre) VALUES
+(1, 1, 'GO', 'Gros œuvre', 1),
+(2, 1, 'SO', 'Second œuvre', 2),
+(3, 1, 'VRD', 'VRD', 3);
+
+-- 3. Initialisation des Postes Clés (Exemples représentatifs)
+INSERT INTO poste_devis (id_poste, id_lot, nom_poste, ordre) VALUES
+(1, 1, 'A) TERRASSEMENTS', 1),
+(2, 1, 'B) FONDATION', 2),
+(3, 1, 'SUPERSTRUCTURE', 3),
+(4, 2, 'APPAREILS SANITAIRES', 1),
+(5, 2, 'DISTRIBUTION SECONDAIRE', 2);
+
+-- 4. Injection d'échantillons de lignes du devis type AMOKA
+INSERT INTO ligne_devis (id_poste, sous_ensemble, designation, unite, quantite, prix_unitaire, niveau) VALUES
+(1, 'TERRASSEMENT', 'Nivellement ou decapage terre vegetale', 'm²', 800.000, 500.00, 'RDC'),
+(1, 'TERRASSEMENT', 'Implantation des ouvrages', 'ens', 1.000, 450000.00, 'RDC'),
+(1, 'TERRASSEMENT', 'Fouilles en rigole sous murs de soubassement', 'ml', 19.700, 6500.00, 'Fondations / Soubassement'),
+(2, 'FONDATION', 'béton de propreté dosé à 150 kg /m3 epassieur de 5 cm', 'm³', 15.860, 75000.00, 'Fondations / Soubassement'),
+(2, 'FONDATION', 'semelles isolées dosées à 350 kg / m3 - a) béton', 'm³', 92.100, 90000.00, 'Fondations / Soubassement'),
+(2, 'FONDATION', 'semelles isolées dosées à 350 kg / m3 - b) acier', 'kg', 8289.410, 900.00, 'Fondations / Soubassement'),
+(3, 'SUPERSTRUCTURE', 'Poteaux en BA dosé à 350 kg / m3 - a) béton', 'm³', 6.740, 90000.00, 'RDC'),
+(3, 'SUPERSTRUCTURE', 'Plancher en corps creux hourdis 16 + 4', 'm²', 310.000, 35000.00, '1er étage'),
+(4, 'PLOMBERIE', 'Lavabo + Robinetterie', 'u', 4.000, 105000.00, 'Tous niveaux'),
+(4, 'PLOMBERIE', 'WC', 'u', 4.000, 110000.00, 'Tous niveaux'),
+(5, 'ÉLECTRICITÉ', '1 Point lumineux sur simple allumage', 'u', 60.000, 6500.00, 'Tous niveaux'),
+(5, 'ÉLECTRICITÉ', 'Prises de courant 2P+T 10/16A', 'u', 60.000, 25000.00, 'Tous niveaux');
+
+-- 5. Injection de la bibliothèque des prix de référence
+INSERT INTO tache_btp_biblio (code, tache, lot, categorie, unite, rendement, chef, compagnon, manoeuvres, specialiste, couleur_hex) VALUES
+('PRE-001', 'Installation de chantier', 'Préparation', 'Préparation', 'ft', 1.00, 1, 0, 2, 0, 'FFD966'),
+('TER-001', 'Terrassement général (décapage)', 'Préparation', 'Terrassement', 'm³', 4.00, 0, 1, 3, 0, 'FFD966'),
+('BET-001', 'Béton de propreté', 'Fondations', 'Béton', 'm³', 3.00, 0, 1, 2, 0, 'A9D08E'),
+('FER-001', 'Ferraillage fondations', 'Fondations', 'Ferraillage', 'kg', 80.00, 0, 2, 1, 0, 'A9D08E'),
+('MAC-001', 'Élévation murs soubassement', 'Gros œuvre', 'Maçonnerie', 'm²', 2.50, 0, 2, 2, 0, '9DC3E6'),
+('BET-005', 'Dalle RDC (coffrage + ferraillage + béton)', 'Gros œuvre', 'Béton', 'm²', 1.20, 1, 3, 3, 0, '9DC3E6'),
+('PEI-001', 'Peinture intérieure', 'Finitions', 'Peinture', 'm²', 4.00, 0, 1, 1, 0, 'F8CBAD');
+
+-- 6. Injection des sous-traitants par défaut
+INSERT INTO soustraitant (id_projet, nom, metier, lot, marche_montant) VALUES
+(1, 'ST_01', 'Maçon', 'GO', 29732403.00),
+(1, 'ST_02', 'Menuisier coffreur', 'GO', 15847373.00),
+(1, 'ST_03', 'Ferrailleur', 'GO', 12385920.00),
+(1, 'ST_06', 'Carreleur', 'SO', 9216355.00),
+(1, 'ST_07', 'Plombier', 'SO', 15270000.00),
+(1, 'ST_14', 'Électricien', 'SO', 13203300.00);
+
+-- Réajustement des séquences AUTO_INCREMENT
+SELECT setval('entreprise_id_entreprise_seq', (SELECT MAX(id_entreprise) FROM entreprise));
+SELECT setval('projet_id_projet_seq', (SELECT MAX(id_projet) FROM projet));
+SELECT setval('lot_devis_id_lot_seq', (SELECT MAX(id_lot) FROM lot_devis));
+SELECT setval('poste_devis_id_poste_seq', (SELECT MAX(id_poste) FROM poste_devis));
+SELECT setval('soustraitant_id_st_seq', (SELECT MAX(id_st) FROM soustraitant));
