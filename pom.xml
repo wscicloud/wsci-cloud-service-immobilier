@@ -18,7 +18,7 @@
 
  	<groupId>com.wscicloud.service</groupId>
 	<artifactId>wsci-cloud-service-immobilier</artifactId>
-	<version>09.02.15</version>
+	<version>09.03.12</version>
     <name>wsci-cloud-service-immobilier</name>
 	<description>Module immobilier (BTP)</description>
 
@@ -48,7 +48,7 @@
 		<dependency>
 			<groupId>com.wscicloud.common</groupId>
 			<artifactId>wsci-cloud-common</artifactId>
-			<version>09.02.15</version>
+			<version>09.03.12</version>
         </dependency>
 
         <!-- SPRING -->
