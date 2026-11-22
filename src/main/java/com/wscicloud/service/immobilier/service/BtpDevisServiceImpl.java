@@ -155,6 +155,14 @@ public class BtpDevisServiceImpl implements BtpDevisService {
         ligne.setId(existante == null ? null : existante.getId());
         ligne.setCreeLe(existante == null ? OffsetDateTime.now() : existante.getCreeLe());
         ligne.setDevisId(devisId);
+        if (ligne.getOrdreAffichage() == null) {
+            ligne.setOrdreAffichage(existante != null && existante.getOrdreAffichage() != null
+                    ? existante.getOrdreAffichage()
+                    : ligneRepository.findByDevisIdOrderByOrdreAffichageAscIdAsc(devisId).stream()
+                            .map(BtpLigneDevis::getOrdreAffichage)
+                            .filter(java.util.Objects::nonNull)
+                            .max(Integer::compare).orElse(0) + 1);
+        }
         ligne.setMontantHt(BtpDevisCalculator.montantLigne(dto.getQuantite(), dto.getPrixUnitaireHt()));
         return ligne;
     }

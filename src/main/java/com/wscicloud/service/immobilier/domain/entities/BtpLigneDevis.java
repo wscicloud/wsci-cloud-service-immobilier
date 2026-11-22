@@ -44,22 +44,22 @@ public class BtpLigneDevis implements Serializable {
     @Column(name = "sous_tache_id")
     private Long sousTacheId;
 
-    @Column(name = "ordre_affichage", nullable = false)
+    @Column(name = "ordre_affichage")
     private Integer ordreAffichage;
 
-    @Column(name = "designation", nullable = false)
+    @Column(name = "designation")
     private String designation;
 
     @Column(name = "unite")
     private String unite;
 
-    @Column(name = "quantite", nullable = false)
+    @Column(name = "quantite")
     private BigDecimal quantite;
 
-    @Column(name = "prix_unitaire_ht", nullable = false)
+    @Column(name = "prix_unitaire_ht")
     private BigDecimal prixUnitaireHt;
 
-    @Column(name = "montant_ht", nullable = false)
+    @Column(name = "montant_ht")
     private BigDecimal montantHt;
 
     @Column(name = "cree_le", nullable = false)
