@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-@Table(name = "refm_btp_lot", schema = "immobilier")
+@Table(name = "refm_btp_lot", schema = "referentiel_metier")
 @EqualsAndHashCode(of = "id")
 public class RefmBtpLot implements Serializable {
 
@@ -21,7 +21,7 @@ public class RefmBtpLot implements Serializable {
     @Id
     @SequenceGenerator(
             name = "gen_refm_btp_lot",
-            sequenceName = "immobilier.seq_refm_btp_lot",
+            sequenceName = "referentiel_metier.seq_refm_btp_lot",
             initialValue = 1,
             allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gen_refm_btp_lot")
