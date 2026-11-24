@@ -44,14 +44,14 @@ public class BtpProjetController {
         return ResponseEntity.ok(projetService.lire(id));
     }
 
-    @GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> lister() {
-        return ResponseEntity.ok(projetService.lister());
+    @GetMapping(value = "/all/{societeId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> lister(@PathVariable Long societeId) {
+        return ResponseEntity.ok(projetService.lister(societeId));
     }
 
-    @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> rechercher(@RequestParam(required = false) String q) {
-        return ResponseEntity.ok(projetService.rechercher(q));
+    @GetMapping(value = "/search/{societeId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> rechercher(@PathVariable Long societeId, @RequestParam(required = false) String q) {
+        return ResponseEntity.ok(projetService.rechercher(societeId, q));
     }
 
     @DeleteMapping("/{id}")

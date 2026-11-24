@@ -75,16 +75,16 @@ public class BtpProjetServiceImpl implements BtpProjetService {
     }
 
     @Override
-    public List<BtpProjetDto> lister() {
-        return projetMapper.modeleToDto(projetRepository.findAllByOrderByCreeLeDesc());
+    public List<BtpProjetDto> lister(Long societeId) {
+        return projetMapper.modeleToDto(projetRepository.findAllBySocieteIdOrderByCreeLeDesc(societeId));
     }
 
     @Override
-    public List<BtpProjetDto> rechercher(String q) {
+    public List<BtpProjetDto> rechercher(Long societeId, String q) {
         if (q == null || q.isBlank()) {
-            return lister();
+            return lister(societeId);
         }
-        return projetMapper.modeleToDto(projetRepository.rechercher(q.trim()));
+        return projetMapper.modeleToDto(projetRepository.rechercher(societeId, q.trim()));
     }
 
     @Override

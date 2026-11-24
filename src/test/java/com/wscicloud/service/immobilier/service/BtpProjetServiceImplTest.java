@@ -127,15 +127,15 @@ class BtpProjetServiceImplTest {
         BtpProjet p = new BtpProjet();
         p.setId(1L);
         p.setCodeProjet("P1");
-        when(projetRepository.findAllByOrderByCreeLeDesc()).thenReturn(List.of(p));
-        when(projetRepository.rechercher("villa")).thenReturn(List.of(p));
+        when(projetRepository.findAllBySocieteIdOrderByCreeLeDesc(7L)).thenReturn(List.of(p));
+        when(projetRepository.rechercher(7L, "villa")).thenReturn(List.of(p));
 
-        assertThat(service.rechercher("  "))
+        assertThat(service.rechercher(7L, "  "))
                 .extracting(BtpProjetDto::getCodeProjet)
                 .containsExactly("P1");
-        assertThat(service.rechercher(" villa "))
+        assertThat(service.rechercher(7L, " villa "))
                 .extracting(BtpProjetDto::getId)
                 .containsExactly(1L);
-        verify(projetRepository).rechercher("villa");
+        verify(projetRepository).rechercher(7L, "villa");
     }
 }

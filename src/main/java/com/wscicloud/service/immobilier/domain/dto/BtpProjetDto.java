@@ -23,6 +23,8 @@ public class BtpProjetDto implements Serializable {
 
     private Long id;
 
+    private Long societeId;
+
     @NotBlank private String codeProjet;
 
     @NotBlank private String nomProjet;

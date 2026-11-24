@@ -14,11 +14,12 @@ public interface BtpProjetRepository extends JpaRepository<BtpProjet, Long> {
 
     boolean existsByCodeProjet(String codeProjet);
 
-    List<BtpProjet> findAllByOrderByCreeLeDesc();
+    List<BtpProjet> findAllBySocieteIdOrderByCreeLeDesc(Long societeId);
 
-    @Query("select p from BtpProjet p where lower(p.codeProjet) like lower(concat('%', :q, '%'))"
+    @Query("select p from BtpProjet p where p.societeId = :societeId "
+            + " and (lower(p.codeProjet) like lower(concat('%', :q, '%'))"
             + " or lower(p.nomProjet) like lower(concat('%', :q, '%'))"
             + " or lower(p.clientNom) like lower(concat('%', :q, '%'))"
-            + " or lower(p.localisation) like lower(concat('%', :q, '%')) order by p.creeLe desc")
-    List<BtpProjet> rechercher(@Param("q") String q);
+            + " or lower(p.localisation) like lower(concat('%', :q, '%'))) order by p.creeLe desc")
+    List<BtpProjet> rechercher(@Param("societeId") Long societeId, @Param("q") String q);
 }

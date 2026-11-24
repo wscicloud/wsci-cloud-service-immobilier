@@ -119,15 +119,15 @@ class BtpControllersTest {
     }
 
     @Test
-    @DisplayName("Given deux projets When GET btp/projet/all Then 200 et la liste JSON")
+    @DisplayName("Given deux projets When GET btp/projet/all/7 Then 200 et la liste JSON")
     void listerProjets() throws Exception {
         BtpProjetDto a = new BtpProjetDto();
         a.setId(1L);
         BtpProjetDto b = new BtpProjetDto();
         b.setId(2L);
-        when(projetService.lister()).thenReturn(List.of(a, b));
+        when(projetService.lister(7L)).thenReturn(List.of(a, b));
 
-        mvc.perform(get("/btp/projet/all"))
+        mvc.perform(get("/btp/projet/all/7"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[1].id").value(2));

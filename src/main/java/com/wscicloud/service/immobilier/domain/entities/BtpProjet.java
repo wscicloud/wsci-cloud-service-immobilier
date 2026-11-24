@@ -30,6 +30,9 @@ public class BtpProjet implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gen_btp_projet")
     private Long id;
 
+    @Column(name = "societe_id", nullable = false)
+    private Long societeId;
+
     @Column(name = "code_projet", nullable = false)
     private String codeProjet;
 

@@ -12,9 +12,9 @@ public interface BtpProjetService {
 
     BtpProjetDto lire(Long id);
 
-    List<BtpProjetDto> lister();
+    List<BtpProjetDto> lister(Long societeId);
 
-    List<BtpProjetDto> rechercher(String q);
+    List<BtpProjetDto> rechercher(Long societeId, String q);
 
     void supprimer(Long id);
 }
