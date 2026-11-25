@@ -55,5 +55,15 @@ public class BtpProjetDto implements Serializable {
 
     private String statut;
 
+    private Long deviseId;
+
+    private String deviseLibelle;
+
+    private Long statutId;
+
+    private String statutValeur;
+
+    private String statutLibelle;
+
     private OffsetDateTime creeLe;
 }

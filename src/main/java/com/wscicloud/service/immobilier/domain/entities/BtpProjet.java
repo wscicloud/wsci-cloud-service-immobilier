@@ -78,6 +78,21 @@ public class BtpProjet implements Serializable {
     @Column(name = "statut", nullable = false)
     private String statut;
 
+    @Column(name = "devise_id")
+    private Long deviseId;
+
+    @Column(name = "devise_libelle")
+    private String deviseLibelle;
+
+    @Column(name = "statut_id")
+    private Long statutId;
+
+    @Column(name = "statut_valeur")
+    private String statutValeur;
+
+    @Column(name = "statut_libelle")
+    private String statutLibelle;
+
     @Column(name = "cree_le", nullable = false)
     private OffsetDateTime creeLe;
 }

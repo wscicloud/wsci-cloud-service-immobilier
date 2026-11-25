@@ -37,6 +37,9 @@ public class BtpProjetServiceImpl implements BtpProjetService {
         BtpProjet projet = projetMapper.dtoToModele(dto);
         projet.setId(null);
         projet.setCreeLe(OffsetDateTime.now());
+        if (projet.getStatutValeur() != null) {
+            projet.setStatut(projet.getStatutValeur());
+        }
         if (projet.getStatut() == null) {
             projet.setStatut(STATUT_DEFAUT);
         }
@@ -60,6 +63,9 @@ public class BtpProjetServiceImpl implements BtpProjetService {
         BtpProjet existant = trouver(dto.getId());
         BtpProjet projet = projetMapper.dtoToModele(dto);
         projet.setCreeLe(existant.getCreeLe());
+        if (projet.getStatutValeur() != null) {
+            projet.setStatut(projet.getStatutValeur());
+        }
         if (projet.getStatut() == null) {
             projet.setStatut(existant.getStatut());
         }
